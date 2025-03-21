@@ -4,6 +4,7 @@ Serverside component of OpenLWR, handles communication with clients and runs the
 very big thanks to Goosey (fluff.goose on discord) for writing the original reactor physics in lua
 
 # How to run
+NOTE: This guide is primarily intended for programmers, and thus assumes you already have knowledge of what is a terminal/command prompt and how to use it. If you do not possess such knowledge, please search the internet for "how to use CMD" or something similar before attempting to follow this guide
 ## Step 1: Installing python3.12
 
 <details>
