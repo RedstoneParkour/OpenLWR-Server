@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package dose.proto.common;
+
+message Header {
+    fixed32 magic_number = 1; // 1312 in hexadecimal
+    uint32 protocol_version = 2; // Version 1.0
+    uint32 flags = 3;
+}

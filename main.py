@@ -1,31 +1,22 @@
-from websockets.sync.server import serve
-from websockets.http11 import Response
-from websockets.datastructures import Headers
-import config
-from server import init_server
+import server.session_mgt as session_mgt
 import threading
-import json
-
-
+import config as Configuration
 
 def main():
-    with serve(init_server.init_server, config.config["server_ip"], config.config["server_port"], process_request=process_request) as server:
-        print(f"> Listening for clients on {config.config["server_ip"]}:{config.config["server_port"]}")
-        server.serve_forever()
+    session_mgr = session_mgt.SessionManager("127.0.0.1",1312)
 
-def process_request(connection, headers):
-    path = connection.request.path
-    if path == "/status":
-        response = bytes(json.dumps({'status': '{}'.format(config.config["model"]), 'model': config.config["model"], 'motd': motd()}),'UTF-8')
-        return Response(200, "OK", Headers({'Content-Type': 'application/json', 'Content-Length': len(response)}),
-                        response)
-    return None
+    threading.Thread(target=SessionManagerProcess,args=(session_mgr,)).start()
+    threading.Thread(target=SessionManagerNonYeilding,args=(session_mgr,)).start()
 
-def motd():
-    return config.config["server_motd"]
+def SessionManagerNonYeilding(session_mgr):
+    while True:
 
-def import_simulation():
-    import simulation
+        session_mgr.Retransmission()
+
+def SessionManagerProcess(session_mgr):
+    while True:
+        session_mgr.Process()
+        
 
 if __name__ == '__main__':
     print("""   ____                   __ _       ______ 
@@ -35,8 +26,11 @@ if __name__ == '__main__':
 \\____/ .___/\\___/_/ /_/_____/__/|__/_/ |_|  
     /_/                                     \n""")
     print("> Welcome to OpenLWR-Server")
-    import config
-    if config.config != None:
-        import log
-        threading.Thread(target=import_simulation).start()
-        main()
+
+    print("> Loading Config...")
+
+    Configuration.Load()
+
+    print("> Config Loaded")
+
+    main()

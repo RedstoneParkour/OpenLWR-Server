@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package dose.proto.main;
+import "common.proto";
+
+message UBCMessage {
+    dose.proto.common.Header header = 1;
+    
+    uint32 tick = 2;
+    uint32 session_id = 3;
+
+    message Payload {
+        uint64 device_id = 1;
+        
+        message Data {
+            uint32 field = 1;
+            oneof data {
+                string string_value = 2;
+                int32 int_value = 3;
+                float float_value = 4;
+                bool bool_value = 5;
+                bytes bytes_value = 6;
+            }   
+        }
+
+        repeated Data data_fields = 2;
+    }
+
+    repeated Payload payloads = 4;
+}

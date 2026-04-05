@@ -1,0 +1,103 @@
+syntax = "proto3";
+
+package dose.proto.main;
+import "common.proto";
+
+message RECMessage {
+    dose.proto.common.Header header = 1;
+
+    uint32 seq = 2; // sender sequence number
+    uint32 ack = 3; // last recieved seq from peer
+    RECMessageType type = 4;
+    oneof payload {
+        RECHandshake handshake = 5;
+        RECHandshakeAck handshake_ack = 6;
+        RECSessionClose session_close = 7;
+        RECEvent event = 8;
+        RECInteraction interaction = 9;
+        RECInteractionAck interaction_ack = 10;
+        RECAckOnly ack_only = 11;
+    }
+}
+
+enum RECMessageType {
+    REC_UNKNOWN = 0;
+    REC_HANDSHAKE = 1;
+    REC_HANDSHAKE_ACK = 2;
+    REC_REGISTER_SESSION = 3;
+    REC_SESSION_CLOSE = 4;
+    REC_ACK_ONLY = 5;
+    REC_EVENT = 6;
+    REC_INTERACTION = 7;
+    REC_INTERACTION_ACK = 8;
+}
+
+enum HandshakeVerification {
+    VERIFICATION_NONE = 0;
+    VERIFICATION_BASIC = 1;
+    VERIFICATION_JWT = 2;
+    VERIFICATION_CUSTOM = 3;
+}
+
+message  RECHandshake {
+    message Capabilities {
+        repeated string supported_features = 1;
+        repeated string supported_environments = 2;
+    }
+    
+    Capabilities capabilities = 1;
+    uint32 client_major_version = 2;
+    uint32 client_minor_version = 3;
+    HandshakeVerification verification = 4;
+    string username = 5;
+    bytes verification_data = 6;
+}
+
+message RECHandshakeAck {
+    uint32 session_id = 1;
+    uint32 server_tick = 2;
+    uint32 server_time = 3;
+}
+
+message RECRegisterSession {
+    uint32 ubc_session_id = 1;
+    uint32 uec_session_id = 2;
+}
+
+message RECSessionClose {
+    enum Reason {
+        UNKNOWN = 0;
+        TIMEOUT = 1;
+        VERSION_MISMATCH = 2;
+        VERIFICATION_FAILED = 3;
+        INCOMPATIBLE_FEATURES = 4;
+        PROTOCOL_ERROR = 5;
+        DISCONNECTED = 6;
+        SERVER_SHUTDOWN = 7;
+    }
+    Reason reason = 1;
+    string message = 2;
+}
+
+message RECEvent {
+    uint32 event_type = 1;
+    uint64 source_device = 2;
+    bytes data = 3;
+}
+
+message RECInteraction {
+    uint32 interaction_id = 1;
+    uint32 interaction_type = 2;
+    uint64 target_device = 3;
+    bytes data = 4;
+}
+
+message RECInteractionAck {
+    uint32 interaction_id = 1;
+    bool success = 2; // 0=accepted 1=rejected
+    bytes result_data = 3; // optional data for the result of the interaction
+}
+
+message RECAckOnly {
+    // No content
+}
