@@ -32,7 +32,7 @@ print(device1.is_dirty)
 print(device1.get_fields)
 # the bitween bigger than smaller than (<>) are placeholders
 # usage guide, copy boilerplate i made(spinning_machine9000), change name, add self,<random_tempname>(field_id) = <feild_id>
-# add self._feilds[DeviceFeild("friendly name", <randomtempname>, initial state)]
+# add self._feilds = [DeviceFeild("friendly name", <randomtempname>, initial state)]
 # change handle_request as you may like
 # <device_id> = registry.add_device(<class name of your device class)>())
 # <device_object> = registry.get_device(<device_id>)
