@@ -36,4 +36,4 @@ print(device1.get_fields)
 # change handle_request as you may like
 # <device_id> = registry.add_device(<class name of your device class)>())
 # <device_object> = registry.get_device(<device_id>)
-# you can look at devices.py for what functions you can use, you can also report to jawo_o for help or bugs 😊
+# you can look at devices.py for what functions you can use, you can also report to jawo_o for help or bugs 😊 (only for devs 😠)
