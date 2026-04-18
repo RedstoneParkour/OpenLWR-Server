@@ -14,7 +14,7 @@ class spinning_machine9000(DeviceBase):
             if not isinstance(req.new_value, int):
                 return StateChangeResult.INVALID_VALUE
             if req.new_value < 0:
-                return StateChangeResult.REJECTED  # cant goon backwards
+                return StateChangeResult.REJECTED 
             return self._set_field_value(self.FIELDID_SPINS, req.new_value)
         return StateChangeResult.INVALID_FIELD
 
