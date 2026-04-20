@@ -1,7 +1,9 @@
 import numpy as np
 from typing import Union, Optional
 from dataclasses import dataclass
-from abc import ABC, abstractmethod
+from abc import ABC
+from enum import IntEnum
+import hashlib
 DeviceFieldValue = Union[str, int, float, bool, bytes]
 @dataclass
 class DeviceField:
@@ -14,7 +16,7 @@ class StateChangeRequest:
     field_id: int
     new_value: DeviceFieldValue
 
-class StateChangeResult:
+class StateChangeResult(IntEnum):
     OK = 0
     INVALID_FIELD = 1
     INVALID_VALUE = 2
@@ -22,11 +24,12 @@ class StateChangeResult:
 
 
 class DeviceBase(ABC):
-    def __init__(self, device_type: str):
-        self._deviceid = np.ulonglong(0)
+    def __init__(self, device_type: str, name: str):
+        self._deviceid = np.ulonglong(int(hashlib.sha256(name.encode()).hexdigest(), 16) % (2**64))
         self._devicetype = device_type
         self._isdirty = False
         self._fields: list[DeviceField] = []
+        self._name = name
     @property
     def device_id(self) -> np.ulonglong:
         return self._deviceid
@@ -37,18 +40,20 @@ class DeviceBase(ABC):
     def is_dirty(self) -> bool:
         return self._isdirty
     @property
-    def get_fields(self) -> list[DeviceField]:
+    def fields(self) -> list[DeviceField]:
         return list(self._fields)
+    @property
+    def device_name(self) -> str:
+        return self._name
 
     def clear_dirty(self):
         self._isdirty = False
 
     def get_field_by_id(self, field_id: int) -> Optional[DeviceField]:
-        for field in self._fields:
-            if field.field_id == field_id:
-                return field
-        print("Could not find field with id %d" % field_id)
-        return None
+        if field_id < 0 or field_id >= len(self._fields):
+            print("field_id out of bounds", field_id)
+            return None
+        return self._fields[field_id]
 
     def get_field_by_name(self, name: str) -> Optional[DeviceField]:
         for field in self._fields:
@@ -57,26 +62,20 @@ class DeviceBase(ABC):
         print("Could not find field with name %s" % name)
         return None
 
-    def _set_field_value(
+    def set_field_value(
             self, field_id: int, new_value: DeviceFieldValue):
         field = self.get_field_by_id(field_id)
-
         if field is None:
-            print("Could not find field with id %d" % field_id)
             return StateChangeResult.INVALID_FIELD
 
 
         if not isinstance(new_value, type(field.value)):
-            print("Wrong feild type %d" % field_id)
+            print("Wrong field type %d" % field_id)
             return StateChangeResult.INVALID_VALUE
 
         field.value = new_value
         self._isdirty = True
         return StateChangeResult.OK
-
-    @abstractmethod
-    def handle_request(self, req: StateChangeRequest) -> StateChangeResult:
-        pass
 
 class DeviceRegistry:
     _instance: Optional["DeviceRegistry"] = None
@@ -111,18 +110,13 @@ class DeviceRegistry:
 
         for device in self._devices.values():
             if device.is_dirty:
-                result.append(device.device_id)
+                result.append(device)
         return result
 
-    def add_device(self, device: DeviceBase) -> np.ulonglong:
-        # find the next unoccupied id
-        new_id = np.ulonglong(0)
-        while new_id in self._devices:
-            new_id = np.ulonglong(new_id + 1)
-        self._devices[new_id] = device
-        device._deviceid = new_id
-        print("Added device with id %d" % new_id)
-        return new_id
+    def add_device(self, device: DeviceBase) -> DeviceBase:
+        device_object = device
+        self._devices[device_object.device_id] = device_object
+        return device_object
 
 
     def remove_device(self, device_id: np.ulonglong):
@@ -132,4 +126,15 @@ class DeviceRegistry:
             print("Removed device with id %d" % device_id)
         else:
             print("Could not find device with id %d" % device_id)
-registry = DeviceRegistry() #the singletron, made it so that it wont let you make more
+
+    def request_states_change(self, req: StateChangeRequest) -> StateChangeResult | None:
+        device = self.get_device(req.device_id)
+        if device is not None:
+            return device.set_field_value(req.field_id, req.new_value)
+        return None
+
+
+
+
+registry = DeviceRegistry() #the singleton, made it so that it won't let you make more
+
