@@ -25,20 +25,20 @@ class StateChangeResult(IntEnum):
 
 class DeviceBase(ABC):
     def __init__(self, device_type: str, name: str):
-        self._deviceid = np.ulonglong(int(hashlib.sha256(name.encode()).hexdigest(), 16) % (2**64))
-        self._devicetype = device_type
-        self._isdirty = False
+        self._device_id = np.ulonglong(int(hashlib.sha256(name.encode()).hexdigest(), 16) % (2**64))
+        self._device_type = device_type
+        self._is_dirty = False
         self._fields: list[DeviceField] = []
         self._name = name
     @property
     def device_id(self) -> np.ulonglong:
-        return self._deviceid
+        return self._device_id
     @property
     def device_type(self) -> str:
-        return self._devicetype
+        return self._device_type
     @property
     def is_dirty(self) -> bool:
-        return self._isdirty
+        return self._is_dirty
     @property
     def fields(self) -> list[DeviceField]:
         return list(self._fields)
@@ -47,7 +47,7 @@ class DeviceBase(ABC):
         return self._name
 
     def clear_dirty(self):
-        self._isdirty = False
+        self._is_dirty = False
 
     def get_field_by_id(self, field_id: int) -> Optional[DeviceField]:
         if field_id < 0 or field_id >= len(self._fields):
@@ -74,17 +74,16 @@ class DeviceBase(ABC):
             return StateChangeResult.INVALID_VALUE
 
         field.value = new_value
-        self._isdirty = True
+        self._is_dirty = True
         return StateChangeResult.OK
 
 class DeviceRegistry:
-    _instance: Optional["DeviceRegistry"] = None
+    _instance: "DeviceRegistry"
     _devices: dict[np.ulonglong, "DeviceBase"]
     def __new__(cls) -> "DeviceRegistry":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._devices = {}
-        assert cls._instance is not None
         return cls._instance
 
     def get_device(self, device_id: np.ulonglong) -> Optional[DeviceBase]:
@@ -136,5 +135,5 @@ class DeviceRegistry:
 
 
 
-registry = DeviceRegistry() #the singleton, made it so that it won't let you make more
+REGISTRY = DeviceRegistry() #the singleton, made it so that it won't let you make more
 
