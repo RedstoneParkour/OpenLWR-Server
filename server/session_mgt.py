@@ -53,6 +53,9 @@ class SessionManager:
             
             case rec_proto.RECMessageType.REC_EVENT:
                 client.OnEvent(recmessage)
+
+            case rec_proto.RECMessageType.REC_INTERACTION:
+                client.OnInteraction(recmessage)
                 
 
     def Process(self):
