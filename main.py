@@ -2,8 +2,11 @@ import server.session_mgt as session_mgt
 import threading
 import config as Configuration
 
+session_mgr = None
+
 def main():
     session_mgr = session_mgt.SessionManager("127.0.0.1",1312)
+    
 
     threading.Thread(target=SessionManagerProcess,args=(session_mgr,)).start()
     threading.Thread(target=SessionManagerNonYeilding,args=(session_mgr,)).start()
@@ -11,7 +14,7 @@ def main():
 def SessionManagerNonYeilding(session_mgr):
     while True:
 
-        session_mgr.Retransmission()
+        pass
 
 def SessionManagerProcess(session_mgr):
     while True:

@@ -10,8 +10,8 @@ class RecStatus(Enum):
 
 class RecCommunication:
     def __init__(self):
-        self.session_iteration = 0
-
+        pass
+        
     def CreateDefaultRecMessage(self,message_type:rec_proto.RECMessageType):
         msg = rec_proto.RECMessage()
         msg.header.magic_number = 4482
@@ -28,15 +28,12 @@ class RecCommunication:
         #make a default rec message, and add the close message as a payload
         def_message = self.CreateDefaultRecMessage(rec_proto.RECMessageType.REC_SESSION_CLOSE)
         def_message.session_close.CopyFrom(closemsg)
-        return def_message
+        return RecStatus.OK, def_message
       
-    def CreateRecHandshakeAck(self):
+    def CreateRecHandshakeAck(self,session_id):
         #make the ack message
         msg = rec_proto.RECHandshakeAck()
-        msg.session_id = self.session_iteration
-
-        #increment the session iteration for the next client
-        self.session_iteration+=1
+        msg.session_id = session_id
 
         msg.server_tick = 0 #TODO: implement tick
         msg.server_time = int(time.time()) #TODO: Make uptime in seconds (int)
@@ -45,7 +42,7 @@ class RecCommunication:
         def_message = self.CreateDefaultRecMessage(rec_proto.RECMessageType.REC_HANDSHAKE_ACK)
         def_message.handshake_ack.CopyFrom(msg)
 
-        return def_message
+        return RecStatus.OK, def_message
 
     def CreateRecEvent(self,data:bytes):
         msg = rec_proto.RECEvent()
@@ -53,7 +50,7 @@ class RecCommunication:
 
         def_message = self.CreateDefaultRecMessage(rec_proto.RECMessageType.REC_EVENT)
         def_message.event.CopyFrom(msg)
-        return def_message
+        return RecStatus.OK, def_message
 
 
     def RecHandshake(self,data):
