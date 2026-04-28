@@ -1,2 +1,2 @@
-numpy
-Events
+numpy==2.4.4
+events
