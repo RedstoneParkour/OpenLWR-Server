@@ -5,25 +5,23 @@ import server.protocols.rec_pb2 as rec_proto
 from server.communication.rec_communication import RecCommunication,RecStatus
 import config
 import time
+from events import Events
+
+rec_communication = RecCommunication()
 
 class SessionManager:
     def __init__(self,ip:str,port:int):
-        self.RecCommunciation = RecCommunication()
         self.SessionRegistry = SessionRegistry()
-        self.SocketRec = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+        self.SocketRec = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         
         self.SocketRec.bind((ip,port))
+        self.SocketRec.listen()
         print("> Listening for clients on "+ip+":"+str(port))
 
 
         self.debugsendtimer = time.time()
 
-    def SendMessage(self,address,message):
-        self.SocketRec.sendto(message.SerializeToString(),address)
-
-
-
-    def ProcessDataRec(self,data,client_address):
+    def ProcessDataRec(self,data,address):
 
         recmessage = rec_proto.RECMessage()
 
@@ -33,78 +31,46 @@ class SessionManager:
         Sessions = self.SessionRegistry.GetAll()
         for SessionN in Sessions:
             Ses = Sessions[SessionN]
-            IsClient = Ses.RecSession.IsThisMyClient(client_address)
+            IsClient = Ses.RecSession.IsThisMyClient(address)
             if IsClient:
                 client = Ses.RecSession
                 break
 
-        if recmessage.type != rec_proto.RECMessageType.REC_HANDSHAKE and client == None:
-            self.SendMessage(client_address,self.RecCommunciation.CreateRecSessionClose(rec_proto.RECSessionClose.Reason.PROTOCOL_ERROR,"Unregistered client attempted to negotiate"))
-            return
-        elif recmessage.type == rec_proto.RECMessageType.REC_HANDSHAKE and client != None:
-            self.SendMessage(client_address,self.RecCommunciation.CreateRecSessionClose(rec_proto.RECSessionClose.Reason.PROTOCOL_ERROR,"Registered client attempted to handshake"))
-            return
+        #some sanity checking
+        #if recmessage.type != rec_proto.RECMessageType.REC_HANDSHAKE and client == None:
+        #    self.SendMessage(address,self.RecCommunciation.CreateRecSessionClose(rec_proto.RECSessionClose.Reason.PROTOCOL_ERROR,"Unregistered client attempted to negotiate"))
+        #    return
+        #elif recmessage.type == rec_proto.RECMessageType.REC_HANDSHAKE and client != None:
+        #    self.SendMessage(address,self.RecCommunciation.CreateRecSessionClose(rec_proto.RECSessionClose.Reason.PROTOCOL_ERROR,"Registered client attempted to handshake"))
+        #    return
 
         match recmessage.type:
 
             #TODO: verification types for password access
             case rec_proto.RECMessageType.REC_HANDSHAKE:
-                Status,Response = self.RecCommunciation.RecHandshake(recmessage)
-
-                if Status == RecStatus.OK:
-                    SessionId = Response.handshake_ack.session_id
-                    MinorVersion = recmessage.handshake.client_minor_version
-
-                    rec_connection = RecConnection(SessionId,MinorVersion,SessionState.Active,client_address)
-                    user_session = Session(rec_connection)
-                    self.SessionRegistry.Add(user_session)
-
-                self.SendMessage(client_address,Response)
+                client.OnHandshake(recmessage)
             
             case rec_proto.RECMessageType.REC_EVENT:
-                client.ReceivedMessage(recmessage)
-
-            case rec_proto.RECMessageType.REC_ACK_ONLY:
-                client.AckedMessage(recmessage.ack)
+                client.OnEvent(recmessage)
                 
 
     def Process(self):
         #REC
-        RecData, client_address = self.SocketRec.recvfrom(1024)
+        connection, address = self.SocketRec.accept()
+        with connection:
+            #create a session and rec connection, and register that with session manager
+            print("servicing new connection") #TODO: this is a temporary print, we can remove this later
 
-        self.ProcessDataRec(RecData,client_address)
+            rec_connection = RecConnection(ClientAddress=address,Client=connection) # we will edit all of this later when we handshake
+            user_session = Session(rec_connection)
+            self.SessionRegistry.Add(user_session)
 
-    def Retransmission(self):
-
-
-        Sessions = self.SessionRegistry.GetAll()
-
-        for SessionN in Sessions:
-            Ses = Sessions[SessionN]
-            Data = Ses.RecSession.RetransmitMessages()
-
-            if Data == False:
-                #kick the client
-                continue
-            else:
-                for Message in Data:
-                    self.SendMessage(Ses.RecSession.ClientAddress,Message)
-
-            if time.time()-self.debugsendtimer > 5:
-                msg = self.RecCommunciation.CreateRecEvent(bytes())
-                msg.seq = Ses.RecSession.CurrentSeq+1
-                Ses.RecSession.CurrentSeq+=1
-                Ses.RecSession.ExepectedSeq+=1
-
-                Ses.RecSession.SendMessageWithAck(msg)
-
-                self.SendMessage(Ses.RecSession.ClientAddress,msg)
-                self.debugsendtimer = time.time()
+            #receive data and process
+            while True:
+                data = connection.recv(1048)
+                self.ProcessDataRec(data,address)
             
-
     def CloseServer(self,reason:str):
-
-        
 
         self.SocketRec.close()
 
@@ -121,73 +87,43 @@ class Connection:
         self.State = State
         self.ClientAddress = ClientAddress #ip:port
 
+        self.OnMessage = Events()
+        self.OnConnection = Events()
+        self.OnClose = Events()
+
     def IsThisMyClient(self,ClientAddress:tuple):
         return self.ClientAddress[0] == ClientAddress[0] and self.ClientAddress[1] == ClientAddress[1]
 
-class RecConnection(Connection): 
-    def __init__(self,SessionId:np.uint32,MinorVersion:np.uint32,State:SessionState,ClientAddress:tuple):
-        super().__init__(SessionId,MinorVersion,State,ClientAddress)
-        
-        self.CurrentSeq = 0
-        self.ExepectedSeq = 0
-
-        self.MessagesAcked = []
-        self.PendingAck = {} #messages we're waiting for the client to acknowledge (after a timeout we will resend)
-        #"seqnumber":{"time":0,"retries":0,"message":msg}
-        self.ReceieveBuffer = {} #out of order messages to sort through
-
-    def SendMessageWithAck(self,message):
-        self.PendingAck[message.seq] = {"time":time.time(),"retries":0,"message":message}
-
-    def ReceivedMessage(self,message):
-        if self.ExepectedSeq == message.seq:
-            #parse
-            print("Received")
-            self.CurrentSeq = message.seq
-            self.ExepectedSeq += 1
-        elif message.seq < self.ExepectedSeq:
-            
-            print("Previous message received, acknowledging")
-        else:
-            self.ReceieveBuffer[message.seq] = message
-            print("Out of sequence message received, storing")
-
-    def AckedMessage(self,seq):
-        self.MessagesAcked.append(seq)
-
-    def SortReceiveBuffer(self): #gets called every time a message is receieved
-        for MessageSeq in self.ReceieveBuffer:
-            if MessageSeq == self.ExepectedSeq:
-                self.ReceivedMessage(self.ReceieveBuffer[MessageSeq])
-                self.ReceieveBuffer.pop(MessageSeq)
-            
+    def Send(self,message):
+        pass
     
-    def RetransmitMessages(self):
-        MessagesToResend = []
 
-        for AckedSeq in self.MessagesAcked:
-            self.PendingAck.pop(AckedSeq)
-            self.MessagesAcked.remove(AckedSeq)
+class RecConnection(Connection): 
+    def __init__(self,Client,SessionId:np.uint32=-1,MinorVersion:np.uint32=-1,State:SessionState=SessionState.Connecting,ClientAddress:tuple=None):
+        super().__init__(SessionId,MinorVersion,State,ClientAddress)
 
-        for PendingSeq in self.PendingAck:
-            PendingData = self.PendingAck[PendingSeq]
+        self.Client = Client #we have to have this because tcp is special i guess
 
-            if time.time() - PendingData["time"] > config.config["server_ack_timeout"]:
-                if PendingData["retries"] < config.config["server_ack_retry_limit"]:
-                    PendingData["time"] = time.time()
-                    PendingData["retries"] += 1
-                    MessagesToResend.append(PendingData["message"])
-                    print("Retry")
-                else:
-                    return False
-        
-        return MessagesToResend
+        #TODO: is this supposed to go in a higher level..?
+        self.OnChannelRegistration = Events()
+        self.OnInteraction = Events() #go to devices
+        self.OnEvent = Events() #go somewhere idk
+
+    def OnHandshake(self,message):
+        Status,Message = rec_communication.CreateRecHandshakeAck(session_id=1) #temporary magic number
+
+        self.Send(message)
+
+    def Send(self,message):
+        self.Client.send(message.SerializeToString())
+    
 
 class Session:
-    def __init__(self,RecSession:Connection,UbcSession:Connection=None,UecSession:Connection=None):
+    def __init__(self,RecSession:Connection,UbcSession:Connection=None,UecSession:Connection=None,Username:str="Test"):
         self.RecSession = RecSession
         self.UbcSession = UbcSession
         self.UecSession = UecSession
+        self.Username = Username
 
     def IsThisMyClient(self,ClientAddress:tuple):
         if self.RecSession.IsThisMyClient(ClientAddress):
