@@ -28,7 +28,7 @@ class RecCommunication:
         #make a default rec message, and add the close message as a payload
         def_message = self.CreateDefaultRecMessage(rec_proto.RECMessageType.REC_SESSION_CLOSE)
         def_message.session_close.CopyFrom(closemsg)
-        return RecStatus.OK, def_message
+        return def_message
       
     def CreateRecHandshakeAck(self,session_id):
         #make the ack message
@@ -42,7 +42,7 @@ class RecCommunication:
         def_message = self.CreateDefaultRecMessage(rec_proto.RECMessageType.REC_HANDSHAKE_ACK)
         def_message.handshake_ack.CopyFrom(msg)
 
-        return RecStatus.OK, def_message
+        return def_message
 
     def CreateRecEvent(self,data:bytes):
         msg = rec_proto.RECEvent()
@@ -50,10 +50,10 @@ class RecCommunication:
 
         def_message = self.CreateDefaultRecMessage(rec_proto.RECMessageType.REC_EVENT)
         def_message.event.CopyFrom(msg)
-        return RecStatus.OK, def_message
+        return def_message
 
 
-    def RecHandshake(self,data):
+    def RecHandshake(self,data,session_id):
         major_ver = data.handshake.client_major_version
 
         Status = RecStatus.UNKNOWN
@@ -63,7 +63,7 @@ class RecCommunication:
             msg = self.CreateRecSessionClose(rec_proto.RECSessionClose.Reason.VERSION_MISMATCH,"Server requires major version 1")
             Status = RecStatus.REJECTED
         else:
-            msg = self.CreateRecHandshakeAck()
+            msg = self.CreateRecHandshakeAck(session_id)
             Status = RecStatus.OK
         
         return Status,msg

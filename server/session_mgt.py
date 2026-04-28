@@ -6,6 +6,7 @@ from server.communication.rec_communication import RecCommunication,RecStatus
 import config
 import time
 from events import Events
+import threading
 
 rec_communication = RecCommunication()
 
@@ -56,19 +57,25 @@ class SessionManager:
 
     def Process(self):
         #REC
-        connection, address = self.SocketRec.accept()
-        with connection:
-            #create a session and rec connection, and register that with session manager
-            print("servicing new connection") #TODO: this is a temporary print, we can remove this later
 
-            rec_connection = RecConnection(ClientAddress=address,Client=connection) # we will edit all of this later when we handshake
-            user_session = Session(rec_connection)
-            self.SessionRegistry.Add(user_session)
+        conn, addr = self.SocketRec.accept()
 
-            #receive data and process
-            while True:
-                data = connection.recv(1048)
-                self.ProcessDataRec(data,address)
+        #i dont like how i did this but it works
+        def ConnectionManager(connection,address):
+            with connection:
+                #create a session and rec connection, and register that with session manager
+                print("servicing new connection") #TODO: this is a temporary print, we can remove this later
+
+                rec_connection = RecConnection(ClientAddress=address,Client=connection) # we will edit all of this later when we handshake
+                user_session = Session(rec_connection)
+                self.SessionRegistry.Add(user_session)
+
+                #receive data and process
+                while True:
+                    data = connection.recv(1048)
+                    self.ProcessDataRec(data,address)
+
+        threading.Thread(target=ConnectionManager,args=(conn,addr)).start()     
             
     def CloseServer(self,reason:str):
 
@@ -110,9 +117,9 @@ class RecConnection(Connection):
         self.OnEvent = Events() #go somewhere idk
 
     def OnHandshake(self,message):
-        Status,Message = rec_communication.CreateRecHandshakeAck(session_id=1) #temporary magic number
+        Status,msg = rec_communication.RecHandshake(message,session_id=1) #temporary magic number
 
-        self.Send(message)
+        self.Send(msg)
 
     def Send(self,message):
         self.Client.send(message.SerializeToString())
