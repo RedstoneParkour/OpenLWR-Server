@@ -30,7 +30,6 @@ if __name__ == '__main__':
     print("> Welcome to OpenLWR-Server")
 
     print("> Loading Config...")
-    # Configuration.Load() # Assuming you have this implemented
     print("> Config Loaded")
 
     main()
