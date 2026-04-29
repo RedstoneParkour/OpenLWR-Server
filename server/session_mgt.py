@@ -19,8 +19,9 @@ class SessionManager:
         self.SocketRec.listen()
         print("> Listening for clients on "+ip+":"+str(port))
 
-
-        self.debugsendtimer = time.time()
+        self.OnChannelRegistration = Events()
+        self.OnInteraction = Events() #go to devices
+        self.OnEvent = Events() #go somewhere idk
 
     def ProcessDataRec(self,data,address):
 
@@ -52,10 +53,10 @@ class SessionManager:
                 client.OnHandshake(recmessage)
             
             case rec_proto.RECMessageType.REC_EVENT:
-                client.OnEvent(recmessage)
+                self.OnEvent.on_changed(recmessage)
 
             case rec_proto.RECMessageType.REC_INTERACTION:
-                client.OnInteraction(recmessage)
+                self.OnInteraction.on_changed(recmessage)
                 
 
     def Process(self):
@@ -113,11 +114,6 @@ class RecConnection(Connection):
         super().__init__(SessionId,MinorVersion,State,ClientAddress)
 
         self.Client = Client #we have to have this because tcp is special i guess
-
-        #TODO: is this supposed to go in a higher level..?
-        self.OnChannelRegistration = Events()
-        self.OnInteraction = Events() #go to devices
-        self.OnEvent = Events() #go somewhere idk
 
     def OnHandshake(self,message):
         Status,msg = rec_communication.RecHandshake(message,session_id=1) #temporary magic number
