@@ -182,13 +182,8 @@ def on_interaction(client, message):
         print(f">Rejected Interaction #{interaction_id}: State change failed with {result}")
         # ack the client
         return
+    print(f">succesfully updated interaction #{interaction_id}")
     # ack the client
-    print(f">Accepted Interaction #{interaction_id}: field={interaction_type} on device={target_device_id}")
-    print(f"> Name:{device.device_name}")
-    print(f"> Type:{device.device_type}")
-    print(f"> ID:{device.device_id}")
-    print(f"> Field:{device.get_field_by_id(0)}")
-    print(f"> Dirty:{device.is_dirty}")
     # ----------------------------------
     # there are multiple "ack the client" becuase you must exit on a specific part of code or the rest will error
     # mmm i love the pycharm autocompleting the prints for me yumm!!
