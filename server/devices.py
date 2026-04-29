@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from abc import ABC
 from enum import IntEnum
 import hashlib
+import server.protocols.ubc_pb2 as ubc_pb2
 DeviceFieldValue = Union[str, int, float, bool, bytes]
 @dataclass
 class DeviceField:
@@ -40,7 +41,7 @@ class DeviceBase(ABC):
     def is_dirty(self) -> bool:
         return self._is_dirty
     @property
-    def fields(self) -> list[DeviceField]:
+    def get_fields(self) -> list[DeviceField]:
         return list(self._fields)
     @property
     def device_name(self) -> str:
@@ -78,7 +79,7 @@ class DeviceBase(ABC):
         return StateChangeResult.OK
 
 class DeviceRegistry:
-    _instance: "DeviceRegistry"
+    _instance: "DeviceRegistry" = None
     _devices: dict[np.ulonglong, "DeviceBase"]
     def __new__(cls) -> "DeviceRegistry":
         if cls._instance is None:
@@ -132,8 +133,62 @@ class DeviceRegistry:
             return device.set_field_value(req.field_id, req.new_value)
         return None
 
-
-
-
 REGISTRY = DeviceRegistry() #the singleton, made it so that it won't let you make more
 
+
+def on_interaction(client, message):
+    interaction = message.interaction
+    interaction_id = interaction.interaction_id
+    interaction_type = interaction.interaction_type
+    target_device_id = interaction.target_device
+    device = REGISTRY.get_device(target_device_id)
+
+
+    if device is None:
+        print(f">Rejected Interaction #{interaction_id}: Invalid device ID {target_device_id}")
+        # ack the client
+        return
+    if not interaction.data:
+        print(f">Rejected Interaction #{interaction_id}: Empty payload")
+        # ack the client
+        return
+    field = device.get_field_by_id(interaction_type)
+    if field is None:
+        print(f">Rejected Interaction #{interaction_id}: Unknown field ID {interaction_type} on device {target_device_id}")
+        # ack the client
+        return
+    try:
+        field_data = ubc_pb2.UBCMessage.Payload.Data()
+        field_data.ParseFromString(interaction.data)
+        value_type = field_data.WhichOneof("data")
+        if value_type is None:
+            print(f">Rejected Interaction #{interaction_id}: Payload has no value set")
+            # ack the client
+            return
+        new_value = getattr(field_data, value_type)
+    except Exception as e:
+        print(f">Rejected Interaction #{interaction_id}: Failed to deserialize payload: {e}")
+        # ack the client
+        return
+
+
+    req = StateChangeRequest(
+        device_id=target_device_id,
+        field_id=interaction_type,
+        new_value=new_value,
+    )
+    result = REGISTRY.request_states_change(req)
+    if result != StateChangeResult.OK:
+        print(f">Rejected Interaction #{interaction_id}: State change failed with {result}")
+        # ack the client
+        return
+    # ack the client
+    print(f">Accepted Interaction #{interaction_id}: field={interaction_type} on device={target_device_id}")
+    print(f"> Name:{device.device_name}")
+    print(f"> Type:{device.device_type}")
+    print(f"> ID:{device.device_id}")
+    print(f"> Field:{device.get_field_by_id(0)}")
+    print(f"> Dirty:{device.is_dirty}")
+    # ----------------------------------
+    # there are multiple "ack the client" becuase you must exit on a specific part of code or the rest will error
+    # mmm i love the pycharm autocompleting the prints for me yumm!!

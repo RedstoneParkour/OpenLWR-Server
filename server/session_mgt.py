@@ -7,7 +7,7 @@ import config
 import time
 from events import Events
 import threading
-
+import server.devices as devices
 rec_communication = RecCommunication()
 
 class SessionManager:
@@ -55,7 +55,8 @@ class SessionManager:
                 client.OnEvent(recmessage)
 
             case rec_proto.RECMessageType.REC_INTERACTION:
-                client.OnInteraction(recmessage)
+                for handler in client.OnInteractionEvent:
+                    handler(client, recmessage)
                 
 
     def Process(self):
@@ -70,6 +71,7 @@ class SessionManager:
                 print("servicing new connection") #TODO: this is a temporary print, we can remove this later
 
                 rec_connection = RecConnection(ClientAddress=address,Client=connection) # we will edit all of this later when we handshake
+                rec_connection.OnInteractionEvent += [devices.on_interaction]
                 user_session = Session(rec_connection)
                 self.SessionRegistry.Add(user_session)
 
@@ -116,17 +118,18 @@ class RecConnection(Connection):
 
         #TODO: is this supposed to go in a higher level..?
         self.OnChannelRegistration = Events()
-        self.OnInteraction = Events() #go to devices
+        self.OnInteractionEvent = [] #go to devices
         self.OnEvent = Events() #go somewhere idk
+
 
     def OnHandshake(self,message):
         Status,msg = rec_communication.RecHandshake(message,session_id=1) #temporary magic number
 
         self.Send(msg)
-
     def Send(self,message):
         self.Client.send(message.SerializeToString())
-    
+
+
 
 class Session:
     def __init__(self,RecSession:Connection,UbcSession:Connection=None,UecSession:Connection=None,Username:str="Test"):

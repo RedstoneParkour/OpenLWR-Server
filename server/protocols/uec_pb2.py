@@ -22,8 +22,7 @@ _runtime_version.ValidateProtobufRuntimeVersion(
 _sym_db = _symbol_database.Default()
 
 
-import common_pb2 as common__pb2
-
+import server.protocols.common_pb2 as common__pb2
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\tuec.proto\x12\x0f\x64ose.proto.main\x1a\x0c\x63ommon.proto\"\x90\x01\n\nUECMessage\x12)\n\x06header\x18\x01 \x01(\x0b\x32\x19.dose.proto.common.Header\x12\x0b\n\x03seq\x18\x02 \x01(\r\x12\x11\n\ttick_hint\x18\x03 \x01(\r\x12\x12\n\nsession_id\x18\x04 \x01(\r\x12\x12\n\nevent_type\x18\x05 \x01(\r\x12\x0f\n\x07payload\x18\x06 \x01(\x0c\x62\x06proto3')
 
