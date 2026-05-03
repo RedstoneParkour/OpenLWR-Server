@@ -7,7 +7,13 @@ class SBMBreaker(devices.DeviceBase):
         self._fields = [devices.DeviceField("Position",0,1),devices.DeviceField("Flag",1,1)]
 
     def on_interaction(self, interaction_id, interaction_type, data):
-        self.set_field_value(data.field,getattr(data,data.WhichOneof("data")))
+        value = getattr(data,data.WhichOneof("data"))
+        self.set_field_value(data.field,value)
+
+        if self.get_field_by_id(0).value == 0: #switch flag
+            self.set_field_value(1,0)
+        elif self.get_field_by_id(0).value == 2:
+            self.set_field_value(1,1)
 
 class Indicator(devices.DeviceBase):
     def __init__(self, name: str):
