@@ -5,7 +5,7 @@ import config as Configuration
 session_mgr = None
 
 def main():
-    session_mgr = session_mgt.SessionManager("127.0.0.1",1312)
+    session_mgr = session_mgt.SessionManager("127.0.0.1",1313)
     
 
     threading.Thread(target=SessionManagerProcess,args=(session_mgr,)).start()
