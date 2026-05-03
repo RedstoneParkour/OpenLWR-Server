@@ -1,12 +1,19 @@
 import server.session_mgt as session_mgt
 import threading
 import config as Configuration
+from server.simulation import simulation
+from server.example import simulation_module
 
 session_mgr = None
+simulation_context = None
 
 def main():
     session_mgr = session_mgt.SessionManager("127.0.0.1",1313)
     
+    # should i be doing this this way?
+    simulation_context = simulation.SimulationContext()
+    simulation_context.AddModule(simulation_module.BlinkenLights())
+    simulation_context.Start()
 
     threading.Thread(target=SessionManagerProcess,args=(session_mgr,)).start()
     threading.Thread(target=SessionManagerNonYeilding,args=(session_mgr,)).start()

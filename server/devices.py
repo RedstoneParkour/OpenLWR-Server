@@ -149,4 +149,8 @@ def on_interaction(client, message):
         print(f">Rejected Interaction #{interaction_id}: Unknown device {target_device_id}")
         return
 
-    device.on_interaction(interaction_id, interaction_type, interaction.data)
+    
+    data = ubc_pb2.UBCMessage.Payload.Data()
+    data.ParseFromString(interaction.data)
+
+    device.on_interaction(interaction_id, interaction_type, data)

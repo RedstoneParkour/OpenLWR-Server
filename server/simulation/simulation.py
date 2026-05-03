@@ -30,7 +30,7 @@ class SimulationContext:
         self.Name = ""
         self.TickContext = TickContext()
         self.State = SimulationState.Created
-        self.TickRate = 1/60 #60fps
+        self.TickRate = 0.1 #60fps
 
         self.Modules = []
         self.SimulationThread = None

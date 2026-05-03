@@ -1,33 +1,33 @@
 from server.simulation import simulation
+from server import devices
+
+class SBMBreaker(devices.DeviceBase):
+    def __init__(self, name: str):
+        super().__init__(device_type="SBMBreaker",name=name)
+        self._fields = [devices.DeviceField("Position",0,1),devices.DeviceField("Flag",1,1)]
+
+    def on_interaction(self, interaction_id, interaction_type, data):
+        self.set_field_value(data.field,getattr(data,data.WhichOneof("data")))
+
+
+
+
+
 
 class BlinkenLights(simulation.SimulationModule):
     def __init__(self):
         super().__init__()
+        self.LPCS_Pump = SBMBreaker("LPCS_Pump")
+        devices.REGISTRY.add_device(self.LPCS_Pump)
 
     def OnTick(self,world:simulation.SimulationContext,ctx:simulation.TickContext):
-        #make some lights blink, for now since i cant be bothered to add the devices i will just print some stuff
-        print(f"executed. dt:{ctx.Delta} elapsed:{ctx.Elapsed} ")
+
+        #print(f"executed. dt:{ctx.Delta} elapsed:{ctx.Elapsed} ")
         #store some data
-        self.Data.TestValue = True
-
-class PrintAfter5(simulation.SimulationModule):
-    def __init__(self):
-        super().__init__()
-
-    def OnRegister(self, world):
-        self.SetNextEvalStep(300) #set initial wait until execution
-
-    def OnTick(self,world:simulation.SimulationContext,ctx:simulation.TickContext):
-        print("no way")
-
-        #could set eval step here as well to make a module run slower
+        print(devices.REGISTRY.get_device(self.LPCS_Pump.device_id).get_field_by_id(0))
 
 
-#quick test
 
-SimContext = simulation.SimulationContext()
 
-SimContext.AddModule(BlinkenLights())
-SimContext.AddModule(PrintAfter5())
 
-SimContext.Start()
+
