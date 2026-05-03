@@ -26,6 +26,8 @@ class SessionManager:
 
         self.counter_sessionid = 0
 
+        self.counter_sessionid = 0
+
     def ProcessDataRec(self,data,address):
 
         recmessage = rec_proto.RECMessage()
@@ -53,7 +55,16 @@ class SessionManager:
 
             #TODO: verification types for password access
             case rec_proto.RECMessageType.REC_HANDSHAKE:
-                client.OnHandshake(recmessage)
+                if client.OnHandshake(recmessage,self.counter_sessionid):
+
+                    ClientSession = self.SessionRegistry.Find(address)
+                    ClientSession.Username = recmessage.handshake.username
+                    ClientSession.RecSession.MinorVersion = recmessage.handshake.client_minor_version
+
+                    ClientSession.RecSession.State = SessionState.Active #declare connection active
+                else:  #if we reject them, we just delete their session
+                    self.SessionRegistry.Remove(self.SessionRegistry.Find(address).RecSession.SessionId)
+
             
             case rec_proto.RECMessageType.REC_EVENT:
                 self.OnEvent.on_changed(recmessage)
@@ -73,7 +84,8 @@ class SessionManager:
                 #create a session and rec connection, and register that with session manager
                 print("servicing new connection") #TODO: this is a temporary print, we can remove this later
 
-                rec_connection = RecConnection(ClientAddress=address,Client=connection) # we will edit all of this later when we handshake
+                rec_connection = RecConnection(ClientAddress=address,Client=connection,SessionId=self.counter_sessionid) # we will edit all of this later when we handshake
+                self.counter_sessionid += 1 #this will never decrease
                 user_session = Session(rec_connection)
                 self.SessionRegistry.Add(user_session)
 
@@ -110,7 +122,16 @@ class Connection:
 
     def Send(self,message):
         pass
-    
+
+class UbcConnection(Connection):
+    def __init__(self,SessionId:np.uint32,MinorVersion:np.uint32,State:SessionState,ClientAddress:tuple):
+        super().__init__(SessionId,MinorVersion,State,ClientAddress)
+
+    def Subscribe(connection:Connection):
+        pass
+
+    def Unsubscribe(connection:Connection):
+        pass
 
 class RecConnection(Connection): 
     def __init__(self,Client,SessionId:np.uint32=-1,MinorVersion:np.uint32=-1,State:SessionState=SessionState.Connecting,ClientAddress:tuple=None):
@@ -137,14 +158,19 @@ class Session:
         self.Username = Username
 
     def IsThisMyClient(self,ClientAddress:tuple):
-        if self.RecSession.IsThisMyClient(ClientAddress):
-            return True, self.RecSession
+        if self.RecSession != None:
+            if self.RecSession.IsThisMyClient(ClientAddress):
+                return True, self.RecSession
         
-        if self.UbcSession.IsThisMyClient(ClientAddress):
-            return True, self.UbcSession
+        if self.UbcSession != None:
+            if self.UbcSession.IsThisMyClient(ClientAddress):
+                return True, self.UbcSession
         
-        if self.UecSession.IsThisMyClient(ClientAddress):
-            return True, self.UecSession
+        if self.UecSession != None:
+            if self.UecSession.IsThisMyClient(ClientAddress):
+                return True, self.UecSession
+            
+        return False, None
 
     
 
@@ -163,3 +189,10 @@ class SessionRegistry:
 
     def Remove(self,sessionId:np.uint32):
         self.sessions.pop(sessionId)
+
+    def Find(self,address:tuple):
+        for v in self.sessions:
+            IsSession, Session = self.sessions[v].IsThisMyClient(address)
+
+            if IsSession:
+                return self.sessions[v]
