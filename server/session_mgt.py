@@ -23,6 +23,9 @@ class SessionManager:
         self.OnInteraction = Events()  # go to devices
         self.OnEvent = Events()  # go somewhere idk
         self.OnInteraction.on_changed += devices.on_interaction
+
+        self.counter_sessionid = 0
+
     def ProcessDataRec(self,data,address):
 
         recmessage = rec_proto.RECMessage()
@@ -117,8 +120,9 @@ class RecConnection(Connection):
 
     def OnHandshake(self,message):
         Status,msg = rec_communication.RecHandshake(message,session_id=1) #temporary magic number
-
         self.Send(msg)
+        return Status == RecStatus.OK
+    
     def Send(self,message):
         self.Client.send(message.SerializeToString())
 
