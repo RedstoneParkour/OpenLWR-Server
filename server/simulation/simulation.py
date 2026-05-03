@@ -51,6 +51,9 @@ class SimulationContext:
                 elif module.NextEvalStep > 0: #only decrement when greater than 0, so modules can disable themselves at -1
                     module.NextEvalStep -= 1
 
+            self.OnTick.on_changed(self.TickContext)
+            self.TickContext.TickIndex += 1
+
             EndTime = time.perf_counter()
             delta = EndTime-StartTime
 

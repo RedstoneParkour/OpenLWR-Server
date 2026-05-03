@@ -25,6 +25,7 @@ class BlinkenLights(simulation.SimulationModule):
         #print(f"executed. dt:{ctx.Delta} elapsed:{ctx.Elapsed} ")
         #store some data
         print(devices.REGISTRY.get_device(self.LPCS_Pump.device_id).get_field_by_id(0))
+        self.LPCS_Pump.set_field_value(0, 1)
 
 
 

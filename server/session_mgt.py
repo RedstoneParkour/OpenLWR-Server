@@ -11,7 +11,8 @@ import server.devices as devices
 rec_communication = RecCommunication()
 
 class SessionManager:
-    def __init__(self,ip:str,port:int):
+    def __init__(self,ip:str,port:int, ubc_channel):
+        self.ubc_channel = ubc_channel
         self.SessionRegistry = SessionRegistry()
         self.SocketRec = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         
@@ -71,6 +72,10 @@ class SessionManager:
 
             case rec_proto.RECMessageType.REC_INTERACTION:
                 self.OnInteraction.on_changed(client, recmessage)
+
+            case rec_proto.RECMessageType.REC_REGISTER_SESSION:
+                client_ip = client.ClientAddress[0]
+                self.ubc_channel.register(client.SessionId, (client_ip, 1312))
                 
 
     def Process(self):
