@@ -120,6 +120,7 @@ class RecConnection(Connection):
 
     def OnHandshake(self, message, session_id):
         Status, msg = rec_communication.RecHandshake(message, session_id)#temporary magic number
+        
         self.Send(msg)
         return Status == RecStatus.OK
     
