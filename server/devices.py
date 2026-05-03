@@ -74,8 +74,10 @@ class DeviceBase(ABC):
             print("Wrong field type %d" % field_id)
             return StateChangeResult.INVALID_VALUE
 
+        changed_value = field.value != new_value
         field.value = new_value
-        self._is_dirty = True
+        if changed_value:
+            self._is_dirty = True
         return StateChangeResult.OK
 
     def on_interaction(self, interaction_id: int, interaction_type: int, data: bytes):
