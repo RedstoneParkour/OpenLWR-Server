@@ -78,6 +78,9 @@ class DeviceBase(ABC):
         self._is_dirty = True
         return StateChangeResult.OK
 
+    def on_interaction(self, interaction_id: int, interaction_type: int, data: bytes):
+        pass
+
 class DeviceRegistry:
     _instance: "DeviceRegistry" = None
     _devices: dict[np.ulonglong, "DeviceBase"]
@@ -135,7 +138,6 @@ class DeviceRegistry:
 
 REGISTRY = DeviceRegistry() #the singleton, made it so that it won't let you make more
 
-
 def on_interaction(client, message):
     interaction = message.interaction
     interaction_id = interaction.interaction_id
@@ -143,47 +145,8 @@ def on_interaction(client, message):
     target_device_id = interaction.target_device
     device = REGISTRY.get_device(target_device_id)
 
-
     if device is None:
-        print(f">Rejected Interaction #{interaction_id}: Invalid device ID {target_device_id}")
-        # ack the client
-        return
-    if not interaction.data:
-        print(f">Rejected Interaction #{interaction_id}: Empty payload")
-        # ack the client
-        return
-    field = device.get_field_by_id(interaction_type)
-    if field is None:
-        print(f">Rejected Interaction #{interaction_id}: Unknown field ID {interaction_type} on device {target_device_id}")
-        # ack the client
-        return
-    try:
-        field_data = ubc_pb2.UBCMessage.Payload.Data()
-        field_data.ParseFromString(interaction.data)
-        value_type = field_data.WhichOneof("data")
-        if value_type is None:
-            print(f">Rejected Interaction #{interaction_id}: Payload has no value set")
-            # ack the client
-            return
-        new_value = getattr(field_data, value_type)
-    except Exception as e:
-        print(f">Rejected Interaction #{interaction_id}: Failed to deserialize payload: {e}")
-        # ack the client
+        print(f">Rejected Interaction #{interaction_id}: Unknown device {target_device_id}")
         return
 
-
-    req = StateChangeRequest(
-        device_id=target_device_id,
-        field_id=interaction_type,
-        new_value=new_value,
-    )
-    result = REGISTRY.request_states_change(req)
-    if result != StateChangeResult.OK:
-        print(f">Rejected Interaction #{interaction_id}: State change failed with {result}")
-        # ack the client
-        return
-    print(f">succesfully updated interaction #{interaction_id}")
-    # ack the client
-    # ----------------------------------
-    # there are multiple "ack the client" becuase you must exit on a specific part of code or the rest will error
-    # mmm i love the pycharm autocompleting the prints for me yumm!!
+    device.on_interaction(interaction_id, interaction_type, interaction.data)
