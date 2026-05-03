@@ -11,7 +11,7 @@ def Load():
     except OSError:
         print("> Unable to find config, using default")
 
-        with open('config.default.json') as json_config:
+        with open('config.example.json') as json_config:
             config = json.load(json_config)
 
     assert config != {}, "No config, unable to continue"

@@ -7,7 +7,7 @@ import config
 import time
 from events import Events
 import threading
-
+import server.devices as devices
 rec_communication = RecCommunication()
 
 class SessionManager:
@@ -20,8 +20,11 @@ class SessionManager:
         print("> Listening for clients on "+ip+":"+str(port))
 
         self.OnChannelRegistration = Events()
-        self.OnInteraction = Events() #go to devices
-        self.OnEvent = Events() #go somewhere idk
+        self.OnInteraction = Events()  # go to devices
+        self.OnEvent = Events()  # go somewhere idk
+        self.OnInteraction.on_changed += devices.on_interaction
+
+        self.counter_sessionid = 0
 
         self.counter_sessionid = 0
 
@@ -67,7 +70,7 @@ class SessionManager:
                 self.OnEvent.on_changed(recmessage)
 
             case rec_proto.RECMessageType.REC_INTERACTION:
-                self.OnInteraction.on_changed(recmessage)
+                self.OnInteraction.on_changed(client, recmessage)
                 
 
     def Process(self):
@@ -136,15 +139,16 @@ class RecConnection(Connection):
 
         self.Client = Client #we have to have this because tcp is special i guess
 
-    def OnHandshake(self,message,session_id):
-        Status,msg = rec_communication.RecHandshake(message,session_id) #temporary magic number
-
+    def OnHandshake(self, message, session_id):
+        Status, msg = rec_communication.RecHandshake(message, session_id)#temporary magic number
+        
         self.Send(msg)
         return Status == RecStatus.OK
-
+    
     def Send(self,message):
         self.Client.send(message.SerializeToString())
-    
+
+
 
 class Session:
     def __init__(self,RecSession:Connection,UbcSession:Connection=None,UecSession:Connection=None,Username:str="Test"):

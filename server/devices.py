@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from abc import ABC
 from enum import IntEnum
 import hashlib
+import server.protocols.ubc_pb2 as ubc_pb2
 DeviceFieldValue = Union[str, int, float, bool, bytes]
 @dataclass
 class DeviceField:
@@ -40,7 +41,7 @@ class DeviceBase(ABC):
     def is_dirty(self) -> bool:
         return self._is_dirty
     @property
-    def fields(self) -> list[DeviceField]:
+    def get_fields(self) -> list[DeviceField]:
         return list(self._fields)
     @property
     def device_name(self) -> str:
@@ -77,8 +78,11 @@ class DeviceBase(ABC):
         self._is_dirty = True
         return StateChangeResult.OK
 
+    def on_interaction(self, interaction_id: int, interaction_type: int, data: bytes):
+        pass
+
 class DeviceRegistry:
-    _instance: "DeviceRegistry"
+    _instance: "DeviceRegistry" = None
     _devices: dict[np.ulonglong, "DeviceBase"]
     def __new__(cls) -> "DeviceRegistry":
         if cls._instance is None:
@@ -132,8 +136,17 @@ class DeviceRegistry:
             return device.set_field_value(req.field_id, req.new_value)
         return None
 
-
-
-
 REGISTRY = DeviceRegistry() #the singleton, made it so that it won't let you make more
 
+def on_interaction(client, message):
+    interaction = message.interaction
+    interaction_id = interaction.interaction_id
+    interaction_type = interaction.interaction_type
+    target_device_id = interaction.target_device
+    device = REGISTRY.get_device(target_device_id)
+
+    if device is None:
+        print(f">Rejected Interaction #{interaction_id}: Unknown device {target_device_id}")
+        return
+
+    device.on_interaction(interaction_id, interaction_type, interaction.data)
