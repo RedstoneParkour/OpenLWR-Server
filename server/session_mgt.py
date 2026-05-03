@@ -118,8 +118,8 @@ class RecConnection(Connection):
 
         self.Client = Client #we have to have this because tcp is special i guess
 
-    def OnHandshake(self,message):
-        Status,msg = rec_communication.RecHandshake(message,session_id=1) #temporary magic number
+    def OnHandshake(self, message, session_id):
+        Status, msg = rec_communication.RecHandshake(message, session_id)#temporary magic number
         self.Send(msg)
         return Status == RecStatus.OK
     
