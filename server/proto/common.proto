@@ -7,3 +7,11 @@ message Header {
     uint32 protocol_version = 2; // Version 1.0
     uint32 flags = 3;
 }
+
+message Heartbeat {
+    Header header = 1;
+    uint32 session_id = 2;
+    uint32 tick = 3;
+    uint32 timestamp = 4; // Unix timestamp in milliseconds
+    uint32 response_timestamp = 5; // Unix timestamp in milliseconds
+}

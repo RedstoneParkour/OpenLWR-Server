@@ -22,38 +22,44 @@ _runtime_version.ValidateProtobufRuntimeVersion(
 _sym_db = _symbol_database.Default()
 
 
-import server.protocols.common_pb2 as common__pb2
+import common_pb2 as common__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\trec.proto\x12\x0f\x64ose.proto.main\x1a\x0c\x63ommon.proto\"\xff\x03\n\nRECMessage\x12)\n\x06header\x18\x01 \x01(\x0b\x32\x19.dose.proto.common.Header\x12-\n\x04type\x18\x02 \x01(\x0e\x32\x1f.dose.proto.main.RECMessageType\x12\x32\n\thandshake\x18\x03 \x01(\x0b\x32\x1d.dose.proto.main.RECHandshakeH\x00\x12\x39\n\rhandshake_ack\x18\x04 \x01(\x0b\x32 .dose.proto.main.RECHandshakeAckH\x00\x12?\n\x10register_session\x18\x05 \x01(\x0b\x32#.dose.proto.main.RECRegisterSessionH\x00\x12\x39\n\rsession_close\x18\x06 \x01(\x0b\x32 .dose.proto.main.RECSessionCloseH\x00\x12*\n\x05\x65vent\x18\x07 \x01(\x0b\x32\x19.dose.proto.main.RECEventH\x00\x12\x36\n\x0binteraction\x18\x08 \x01(\x0b\x32\x1f.dose.proto.main.RECInteractionH\x00\x12=\n\x0finteraction_ack\x18\t \x01(\x0b\x32\".dose.proto.main.RECInteractionAckH\x00\x42\t\n\x07payload\"\xc3\x02\n\x0cRECHandshake\x12@\n\x0c\x63\x61pabilities\x18\x01 \x01(\x0b\x32*.dose.proto.main.RECHandshake.Capabilities\x12\x1c\n\x14\x63lient_major_version\x18\x02 \x01(\r\x12\x1c\n\x14\x63lient_minor_version\x18\x03 \x01(\r\x12<\n\x0cverification\x18\x04 \x01(\x0e\x32&.dose.proto.main.HandshakeVerification\x12\x10\n\x08username\x18\x05 \x01(\t\x12\x19\n\x11verification_data\x18\x06 \x01(\x0c\x1aJ\n\x0c\x43\x61pabilities\x12\x1a\n\x12supported_features\x18\x01 \x03(\t\x12\x1e\n\x16supported_environments\x18\x02 \x03(\t\"O\n\x0fRECHandshakeAck\x12\x12\n\nsession_id\x18\x01 \x01(\r\x12\x13\n\x0bserver_tick\x18\x02 \x01(\r\x12\x13\n\x0bserver_time\x18\x03 \x01(\r\"D\n\x12RECRegisterSession\x12\x16\n\x0eubc_session_id\x18\x01 \x01(\r\x12\x16\n\x0euec_session_id\x18\x02 \x01(\r\"\x85\x02\n\x0fRECSessionClose\x12\x37\n\x06reason\x18\x01 \x01(\x0e\x32\'.dose.proto.main.RECSessionClose.Reason\x12\x0f\n\x07message\x18\x02 \x01(\t\"\xa7\x01\n\x06Reason\x12\x0b\n\x07UNKNOWN\x10\x00\x12\x0b\n\x07TIMEOUT\x10\x01\x12\x14\n\x10VERSION_MISMATCH\x10\x02\x12\x17\n\x13VERIFICATION_FAILED\x10\x03\x12\x19\n\x15INCOMPATIBLE_FEATURES\x10\x04\x12\x12\n\x0ePROTOCOL_ERROR\x10\x05\x12\x10\n\x0c\x44ISCONNECTED\x10\x06\x12\x13\n\x0fSERVER_SHUTDOWN\x10\x07\"C\n\x08RECEvent\x12\x12\n\nevent_type\x18\x01 \x01(\r\x12\x15\n\rsource_device\x18\x02 \x01(\x04\x12\x0c\n\x04\x64\x61ta\x18\x03 \x01(\x0c\"g\n\x0eRECInteraction\x12\x16\n\x0einteraction_id\x18\x01 \x01(\r\x12\x18\n\x10interaction_type\x18\x02 \x01(\r\x12\x15\n\rtarget_device\x18\x03 \x01(\x04\x12\x0c\n\x04\x64\x61ta\x18\x04 \x01(\x0c\"Q\n\x11RECInteractionAck\x12\x16\n\x0einteraction_id\x18\x01 \x01(\r\x12\x0f\n\x07success\x18\x02 \x01(\x08\x12\x13\n\x0bresult_data\x18\x03 \x01(\x0c*\xb9\x01\n\x0eRECMessageType\x12\x0f\n\x0bREC_UNKNOWN\x10\x00\x12\x11\n\rREC_HANDSHAKE\x10\x01\x12\x15\n\x11REC_HANDSHAKE_ACK\x10\x02\x12\x18\n\x14REC_REGISTER_SESSION\x10\x03\x12\x15\n\x11REC_SESSION_CLOSE\x10\x04\x12\r\n\tREC_EVENT\x10\x06\x12\x13\n\x0fREC_INTERACTION\x10\x07\x12\x17\n\x13REC_INTERACTION_ACK\x10\x08*u\n\x15HandshakeVerification\x12\x15\n\x11VERIFICATION_NONE\x10\x00\x12\x16\n\x12VERIFICATION_BASIC\x10\x01\x12\x14\n\x10VERIFICATION_JWT\x10\x02\x12\x17\n\x13VERIFICATION_CUSTOM\x10\x03\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\trec.proto\x12\x0f\x64ose.proto.main\x1a\x0c\x63ommon.proto\"\xfc\x04\n\nRECMessage\x12)\n\x06header\x18\x01 \x01(\x0b\x32\x19.dose.proto.common.Header\x12-\n\x04type\x18\x02 \x01(\x0e\x32\x1f.dose.proto.main.RECMessageType\x12\x32\n\thandshake\x18\x03 \x01(\x0b\x32\x1d.dose.proto.main.RECHandshakeH\x00\x12\x39\n\rhandshake_ack\x18\x04 \x01(\x0b\x32 .dose.proto.main.RECHandshakeAckH\x00\x12\x44\n\x13server_info_request\x18\x05 \x01(\x0b\x32%.dose.proto.main.RECServerInfoRequestH\x00\x12\x35\n\x0bserver_info\x18\x06 \x01(\x0b\x32\x1e.dose.proto.main.RECServerInfoH\x00\x12?\n\x10register_session\x18\x07 \x01(\x0b\x32#.dose.proto.main.RECRegisterSessionH\x00\x12\x39\n\rsession_close\x18\x08 \x01(\x0b\x32 .dose.proto.main.RECSessionCloseH\x00\x12*\n\x05\x65vent\x18\t \x01(\x0b\x32\x19.dose.proto.main.RECEventH\x00\x12\x36\n\x0binteraction\x18\n \x01(\x0b\x32\x1f.dose.proto.main.RECInteractionH\x00\x12=\n\x0finteraction_ack\x18\x0b \x01(\x0b\x32\".dose.proto.main.RECInteractionAckH\x00\x42\t\n\x07payload\"\xc3\x02\n\x0cRECHandshake\x12@\n\x0c\x63\x61pabilities\x18\x01 \x01(\x0b\x32*.dose.proto.main.RECHandshake.Capabilities\x12\x1c\n\x14\x63lient_major_version\x18\x02 \x01(\r\x12\x1c\n\x14\x63lient_minor_version\x18\x03 \x01(\r\x12<\n\x0cverification\x18\x04 \x01(\x0e\x32&.dose.proto.main.HandshakeVerification\x12\x10\n\x08username\x18\x05 \x01(\t\x12\x19\n\x11verification_data\x18\x06 \x01(\x0c\x1aJ\n\x0c\x43\x61pabilities\x12\x1a\n\x12supported_features\x18\x01 \x03(\t\x12\x1e\n\x16supported_environments\x18\x02 \x03(\t\"O\n\x0fRECHandshakeAck\x12\x12\n\nsession_id\x18\x01 \x01(\r\x12\x13\n\x0bserver_tick\x18\x02 \x01(\r\x12\x13\n\x0bserver_time\x18\x03 \x01(\r\"D\n\x12RECRegisterSession\x12\x16\n\x0eubc_session_id\x18\x01 \x01(\r\x12\x16\n\x0euec_session_id\x18\x02 \x01(\r\"\x85\x02\n\x0fRECSessionClose\x12\x37\n\x06reason\x18\x01 \x01(\x0e\x32\'.dose.proto.main.RECSessionClose.Reason\x12\x0f\n\x07message\x18\x02 \x01(\t\"\xa7\x01\n\x06Reason\x12\x0b\n\x07UNKNOWN\x10\x00\x12\x0b\n\x07TIMEOUT\x10\x01\x12\x14\n\x10VERSION_MISMATCH\x10\x02\x12\x17\n\x13VERIFICATION_FAILED\x10\x03\x12\x19\n\x15INCOMPATIBLE_FEATURES\x10\x04\x12\x12\n\x0ePROTOCOL_ERROR\x10\x05\x12\x10\n\x0c\x44ISCONNECTED\x10\x06\x12\x13\n\x0fSERVER_SHUTDOWN\x10\x07\"C\n\x08RECEvent\x12\x12\n\nevent_type\x18\x01 \x01(\r\x12\x15\n\rsource_device\x18\x02 \x01(\x04\x12\x0c\n\x04\x64\x61ta\x18\x03 \x01(\x0c\"g\n\x0eRECInteraction\x12\x16\n\x0einteraction_id\x18\x01 \x01(\r\x12\x18\n\x10interaction_type\x18\x02 \x01(\r\x12\x15\n\rtarget_device\x18\x03 \x01(\x04\x12\x0c\n\x04\x64\x61ta\x18\x04 \x01(\x0c\"Q\n\x11RECInteractionAck\x12\x16\n\x0einteraction_id\x18\x01 \x01(\r\x12\x0f\n\x07success\x18\x02 \x01(\x08\x12\x13\n\x0bresult_data\x18\x03 \x01(\x0c\"\x16\n\x14RECServerInfoRequest\"\xcb\x02\n\rRECServerInfo\x12\x13\n\x0bserver_name\x18\x01 \x01(\t\x12\x16\n\x0eserver_version\x18\x02 \x01(\t\x12\x0c\n\x04motd\x18\x03 \x01(\t\x12\x14\n\x0cmax_sessions\x18\x04 \x01(\r\x12\x18\n\x10\x63urrent_sessions\x18\x05 \x01(\r\x12H\n\x13server_capabilities\x18\x06 \x01(\x0b\x32+.dose.proto.main.RECServerInfo.Capabilities\x1a\x84\x01\n\x0c\x43\x61pabilities\x12\x19\n\x11required_features\x18\x01 \x03(\t\x12\x1a\n\x12supported_features\x18\x02 \x03(\t\x12\x1d\n\x15required_environments\x18\x03 \x03(\t\x12\x1e\n\x16supported_environments\x18\x04 \x03(\t*\xeb\x01\n\x0eRECMessageType\x12\x0f\n\x0bREC_UNKNOWN\x10\x00\x12\x11\n\rREC_HANDSHAKE\x10\x01\x12\x15\n\x11REC_HANDSHAKE_ACK\x10\x02\x12\x1b\n\x17REC_SERVER_INFO_REQUEST\x10\x03\x12\x13\n\x0fREC_SERVER_INFO\x10\x04\x12\x18\n\x14REC_REGISTER_SESSION\x10\x05\x12\x15\n\x11REC_SESSION_CLOSE\x10\x06\x12\r\n\tREC_EVENT\x10\x07\x12\x13\n\x0fREC_INTERACTION\x10\x08\x12\x17\n\x13REC_INTERACTION_ACK\x10\t*u\n\x15HandshakeVerification\x12\x15\n\x11VERIFICATION_NONE\x10\x00\x12\x16\n\x12VERIFICATION_BASIC\x10\x01\x12\x14\n\x10VERIFICATION_JWT\x10\x02\x12\x17\n\x13VERIFICATION_CUSTOM\x10\x03\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'rec_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_RECMESSAGETYPE']._serialized_start=1557
-  _globals['_RECMESSAGETYPE']._serialized_end=1742
-  _globals['_HANDSHAKEVERIFICATION']._serialized_start=1744
-  _globals['_HANDSHAKEVERIFICATION']._serialized_end=1861
+  _globals['_RECMESSAGETYPE']._serialized_start=2040
+  _globals['_RECMESSAGETYPE']._serialized_end=2275
+  _globals['_HANDSHAKEVERIFICATION']._serialized_start=2277
+  _globals['_HANDSHAKEVERIFICATION']._serialized_end=2394
   _globals['_RECMESSAGE']._serialized_start=45
-  _globals['_RECMESSAGE']._serialized_end=556
-  _globals['_RECHANDSHAKE']._serialized_start=559
-  _globals['_RECHANDSHAKE']._serialized_end=882
-  _globals['_RECHANDSHAKE_CAPABILITIES']._serialized_start=808
-  _globals['_RECHANDSHAKE_CAPABILITIES']._serialized_end=882
-  _globals['_RECHANDSHAKEACK']._serialized_start=884
-  _globals['_RECHANDSHAKEACK']._serialized_end=963
-  _globals['_RECREGISTERSESSION']._serialized_start=965
-  _globals['_RECREGISTERSESSION']._serialized_end=1033
-  _globals['_RECSESSIONCLOSE']._serialized_start=1036
-  _globals['_RECSESSIONCLOSE']._serialized_end=1297
-  _globals['_RECSESSIONCLOSE_REASON']._serialized_start=1130
-  _globals['_RECSESSIONCLOSE_REASON']._serialized_end=1297
-  _globals['_RECEVENT']._serialized_start=1299
-  _globals['_RECEVENT']._serialized_end=1366
-  _globals['_RECINTERACTION']._serialized_start=1368
-  _globals['_RECINTERACTION']._serialized_end=1471
-  _globals['_RECINTERACTIONACK']._serialized_start=1473
-  _globals['_RECINTERACTIONACK']._serialized_end=1554
+  _globals['_RECMESSAGE']._serialized_end=681
+  _globals['_RECHANDSHAKE']._serialized_start=684
+  _globals['_RECHANDSHAKE']._serialized_end=1007
+  _globals['_RECHANDSHAKE_CAPABILITIES']._serialized_start=933
+  _globals['_RECHANDSHAKE_CAPABILITIES']._serialized_end=1007
+  _globals['_RECHANDSHAKEACK']._serialized_start=1009
+  _globals['_RECHANDSHAKEACK']._serialized_end=1088
+  _globals['_RECREGISTERSESSION']._serialized_start=1090
+  _globals['_RECREGISTERSESSION']._serialized_end=1158
+  _globals['_RECSESSIONCLOSE']._serialized_start=1161
+  _globals['_RECSESSIONCLOSE']._serialized_end=1422
+  _globals['_RECSESSIONCLOSE_REASON']._serialized_start=1255
+  _globals['_RECSESSIONCLOSE_REASON']._serialized_end=1422
+  _globals['_RECEVENT']._serialized_start=1424
+  _globals['_RECEVENT']._serialized_end=1491
+  _globals['_RECINTERACTION']._serialized_start=1493
+  _globals['_RECINTERACTION']._serialized_end=1596
+  _globals['_RECINTERACTIONACK']._serialized_start=1598
+  _globals['_RECINTERACTIONACK']._serialized_end=1679
+  _globals['_RECSERVERINFOREQUEST']._serialized_start=1681
+  _globals['_RECSERVERINFOREQUEST']._serialized_end=1703
+  _globals['_RECSERVERINFO']._serialized_start=1706
+  _globals['_RECSERVERINFO']._serialized_end=2037
+  _globals['_RECSERVERINFO_CAPABILITIES']._serialized_start=1905
+  _globals['_RECSERVERINFO_CAPABILITIES']._serialized_end=2037
 # @@protoc_insertion_point(module_scope)

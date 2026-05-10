@@ -10,11 +10,13 @@ message RECMessage {
     oneof payload {
         RECHandshake handshake = 3;
         RECHandshakeAck handshake_ack = 4;
-        RECRegisterSession register_session = 5;
-        RECSessionClose session_close = 6;
-        RECEvent event = 7;
-        RECInteraction interaction = 8;
-        RECInteractionAck interaction_ack = 9;
+        RECServerInfoRequest server_info_request = 5;
+        RECServerInfo server_info = 6;
+        RECRegisterSession register_session = 7;
+        RECSessionClose session_close = 8;
+        RECEvent event = 9;
+        RECInteraction interaction = 10;
+        RECInteractionAck interaction_ack = 11;
     }
 }
 
@@ -22,11 +24,13 @@ enum RECMessageType {
     REC_UNKNOWN = 0;
     REC_HANDSHAKE = 1;
     REC_HANDSHAKE_ACK = 2;
-    REC_REGISTER_SESSION = 3;
-    REC_SESSION_CLOSE = 4;
-    REC_EVENT = 6;
-    REC_INTERACTION = 7;
-    REC_INTERACTION_ACK = 8;
+    REC_SERVER_INFO_REQUEST = 3;
+    REC_SERVER_INFO = 4;
+    REC_REGISTER_SESSION = 5;
+    REC_SESSION_CLOSE = 6;
+    REC_EVENT = 7;
+    REC_INTERACTION = 8;
+    REC_INTERACTION_ACK = 9;
 }
 
 enum HandshakeVerification {
@@ -93,4 +97,25 @@ message RECInteractionAck {
     uint32 interaction_id = 1;
     bool success = 2; // 1=accepted 0=rejected
     bytes result_data = 3; // optional data for the result of the interaction
+}
+
+// This message can be requested without being authenticated
+message RECServerInfoRequest {
+// Intentionally empty
+}
+
+message RECServerInfo {
+    string server_name = 1;
+    string server_version = 2;
+    string motd = 3;
+    uint32 max_sessions = 4;
+    uint32 current_sessions = 5;
+
+    message Capabilities {
+        repeated string required_features = 1;
+        repeated string supported_features = 2;
+        repeated string required_environments = 3;
+        repeated string supported_environments = 4;
+    }
+    Capabilities server_capabilities = 6;
 }
