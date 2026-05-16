@@ -1,22 +1,31 @@
 import numpy as np
 from enum import Enum
 import socket
+from google.protobuf import message
+import server.protocols.common_pb2 as common_proto
 import server.protocols.rec_pb2 as rec_proto
+import server.protocols.ubc_pb2 as ubc_proto
 from server.communication.rec_communication import RecCommunication,RecStatus
+from server.communication.ubc_communication import UbcCommunication
 import config
 import time
 from events import Events
 import threading
 import server.devices as devices
+import struct
 rec_communication = RecCommunication()
+ubc_communication = UbcCommunication()
 
 class SessionManager:
-    def __init__(self,ip:str,port:int, ubc_channel):
-        self.ubc_channel = ubc_channel
+    def __init__(self,ip:str,port:int):
         self.SessionRegistry = SessionRegistry()
         self.SocketRec = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        self.SocketUbc = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+        self.SocketUbc.bind((ip,port))
         
-        self.SocketRec.bind((ip,port))
+        self.SocketRec.setsockopt(socket.SOL_SOCKET,socket.SO_LINGER, struct.pack('ii',1,config.config["rec_linger"]))
+
+        self.SocketRec.bind((ip,port+1))
         self.SocketRec.listen()
         print("> Listening for clients on "+ip+":"+str(port))
 
@@ -25,9 +34,9 @@ class SessionManager:
         self.OnEvent = Events()  # go somewhere idk
         self.OnInteraction.on_changed += devices.on_interaction
 
-        self.counter_sessionid = 0
+        self.counter_sessionid = 1 #start at 1 to prevent giving out session ID 0
 
-        self.counter_sessionid = 0
+
 
     def ProcessDataRec(self,data,address):
 
@@ -44,13 +53,12 @@ class SessionManager:
                 client = Ses.RecSession
                 break
 
-        #some sanity checking
-        #if recmessage.type != rec_proto.RECMessageType.REC_HANDSHAKE and client == None:
-        #    self.SendMessage(address,self.RecCommunciation.CreateRecSessionClose(rec_proto.RECSessionClose.Reason.PROTOCOL_ERROR,"Unregistered client attempted to negotiate"))
-        #    return
-        #elif recmessage.type == rec_proto.RECMessageType.REC_HANDSHAKE and client != None:
-        #    self.SendMessage(address,self.RecCommunciation.CreateRecSessionClose(rec_proto.RECSessionClose.Reason.PROTOCOL_ERROR,"Registered client attempted to handshake"))
-        #    return
+        if (recmessage.type != rec_proto.RECMessageType.REC_HANDSHAKE and recmessage.type != rec_proto.RECMessageType.REC_SERVER_INFO_REQUEST) and client.State != SessionState.Active:
+            client.Send(rec_communication.CreateRecSessionClose(rec_proto.RECSessionClose.Reason.PROTOCOL_ERROR,"Unregistered client sent wrong packet"))
+            return
+        elif recmessage.type == rec_proto.RECMessageType.REC_HANDSHAKE and client.State == SessionState.Active:
+            client.Send(rec_communication.CreateRecSessionClose(rec_proto.RECSessionClose.Reason.PROTOCOL_ERROR,"Registered client attempted to handshake"))
+            return
 
         match recmessage.type:
 
@@ -76,11 +84,55 @@ class SessionManager:
             case rec_proto.RECMessageType.REC_REGISTER_SESSION:
                 client_ip = client.ClientAddress[0]
                 self.ubc_channel.register(client.SessionId, (client_ip, 1312))
+
+            case rec_proto.RECMessageType.REC_SERVER_INFO_REQUEST: #no registration required
+                msg = rec_communication.RecServerInfo()
+                client.Send(msg)
                 
+    def ProcessDataUBC(self,data,address):
+        Heartbeat = common_proto.Heartbeat()
+
+        try: 
+            Heartbeat.ParseFromString(data)
+        except message.DecodeError:
+            #TODO: disconnect client
+            print(f"> Invalid or malformed packet sent to UBC from {address}")
+
+        #add response time
+        Heartbeat.response_timestamp = int(time.time())
+
+
+        if Heartbeat.session_id == 0:
+            self.SocketUbc.sendto(Heartbeat.SerializeToString(),address)
+        else:
+            Session = self.SessionRegistry.Get(Heartbeat.session_id)
+            if Session == None:
+                #TODO: disconnect client
+                print(f"> Client specified a session Id while no such session exists")
+            else:
+                Session.UbcSession.Send(Heartbeat)
+        
+
+    def BroadcastUBC(self,tick_context):
+        #broadcast dirty devices
+        dirty = devices.REGISTRY.get_dirty_devices()
+        if not dirty:
+            return
+
+        payloads = []
+        for device in dirty:
+            payload = ubc_communication.CreatePayloadFromDevice(device)
+            payloads.append(payload)
+            device.clear_dirty()
+
+        Sessions = self.SessionRegistry.GetAll()
+        for SessionN in Sessions:
+            Ses = Sessions[SessionN]
+            if Ses.UbcSession.State == SessionState.Active:
+                Ses.UbcSession.Send()
 
     def Process(self):
         #REC
-
         conn, addr = self.SocketRec.accept()
 
         #i dont like how i did this but it works
@@ -94,13 +146,33 @@ class SessionManager:
                 user_session = Session(rec_connection)
                 self.SessionRegistry.Add(user_session)
 
+
                 #receive data and process
                 while True:
                     data = connection.recv(1048)
                     self.ProcessDataRec(data,address)
 
         threading.Thread(target=ConnectionManager,args=(conn,addr)).start()     
+
+    def ProcessUBC(self):
+        data,addr = self.SocketUbc.recvfrom(1024)
+        self.ProcessDataUBC(data,addr)
+
+    def Process_NoYield(self):
+
+        Sessions = self.SessionRegistry.GetAll()
+        for SessionN in Sessions:
+            Ses = Sessions[SessionN]
+
+            if Ses.RecSession.State == SessionState.Connecting:
+                if time.time()-Ses.RecSession.CreationTime >= config.config["pre_verification_time"]:
+                    Ses.RecSession.Send(rec_communication.CreateRecSessionClose(rec_proto.RECSessionClose.Reason.TIMEOUT,"Exceeded pre-verifcation timeout threshold."))
+                    Ses.RecSession.Client.close()
+                    self.SessionRegistry.Remove(Ses.RecSession.SessionId)
+
             
+
+
     def CloseServer(self,reason:str):
 
         self.SocketRec.close()
@@ -138,11 +210,15 @@ class UbcConnection(Connection):
     def Unsubscribe(connection:Connection):
         pass
 
+    def Send(self,message):
+        SESSION_MANAGER.SocketUbc.sendto(message.SerializeToString(),self.ClientAddress)
+
 class RecConnection(Connection): 
     def __init__(self,Client,SessionId:np.uint32=-1,MinorVersion:np.uint32=-1,State:SessionState=SessionState.Connecting,ClientAddress:tuple=None):
         super().__init__(SessionId,MinorVersion,State,ClientAddress)
 
         self.Client = Client #we have to have this because tcp is special i guess
+        self.CreationTime = time.time()
 
     def OnHandshake(self, message, session_id):
         Status, msg = rec_communication.RecHandshake(message, session_id)#temporary magic number
@@ -184,7 +260,10 @@ class SessionRegistry:
         self.sessions = {}
 
     def Get(self,sessionId:np.uint32):
-        return self.sessions[sessionId]
+        try:
+            return self.sessions[sessionId] 
+        except:
+            return None
 
     def GetAll(self):
         return self.sessions
@@ -201,3 +280,5 @@ class SessionRegistry:
 
             if IsSession:
                 return self.sessions[v]
+            
+SESSION_MANAGER = None

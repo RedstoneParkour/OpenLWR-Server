@@ -2,6 +2,7 @@ import numpy as np
 import server.protocols.rec_pb2 as rec_proto
 import time
 from enum import Enum
+import config
 
 class RecStatus(Enum):
     OK = 0,
@@ -44,6 +45,19 @@ class RecCommunication:
 
         return def_message
 
+    def CreateRecServerInfo(self,server_name,version,motd,max_sessions,current_sessions): #TODO: capabilities
+        msg = rec_proto.RECServerInfo()
+        msg.server_name = server_name
+        msg.server_version = version
+        msg.motd = motd
+        msg.max_sessions = max_sessions
+        msg.current_sessions = current_sessions
+
+        def_message = self.CreateDefaultRecMessage(rec_proto.RECMessageType.REC_SERVER_INFO)
+        def_message.server_info.CopyFrom(msg)
+
+        return def_message
+
     def CreateRecEvent(self,data:bytes):
         msg = rec_proto.RECEvent()
         msg.data = data
@@ -67,3 +81,15 @@ class RecCommunication:
             Status = RecStatus.OK
         
         return Status,msg
+    
+    def RecServerInfo(self):
+        major_version = config.config["server_major_version"]
+        minor_version = config.config["server_minor_version"]
+        server_name = config.config["server_name"]
+        motd = config.config["motd"]
+        max_player_count = config.config["max_player_count"]
+        current_player_count = 0 #TODO
+
+        server_version = f"{major_version}.{minor_version}"
+
+        return self.CreateRecServerInfo(server_name,server_version,motd,max_player_count,current_player_count)

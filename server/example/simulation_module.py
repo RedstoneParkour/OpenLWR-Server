@@ -25,24 +25,24 @@ class Indicator(devices.DeviceBase):
 class BlinkenLights(simulation.SimulationModule):
     def __init__(self):
         super().__init__()
-        self.LPCS_Pump = SBMBreaker("LPCS_Pump")
-        self.LPCS_Off = Indicator("LPCS_Off")
-        self.LPCS_On = Indicator("LPCS_On")
-        devices.REGISTRY.add_device(self.LPCS_Pump)
-        devices.REGISTRY.add_device(self.LPCS_Off)
-        devices.REGISTRY.add_device(self.LPCS_On)
-        self.PumpState = False
+        self.DG_1 = SBMBreaker("DG_1")
+        self.DG_1_Off = Indicator("DG_1_Off")
+        self.DG_1_On = Indicator("DG_1_On")
+        devices.REGISTRY.add_device(self.DG_1)
+        devices.REGISTRY.add_device(self.DG_1_Off)
+        devices.REGISTRY.add_device(self.DG_1_On)
+        self.EngineState = False
 
     def OnTick(self,world:simulation.SimulationContext,ctx:simulation.TickContext):
 
         #print(f"executed. dt:{ctx.Delta} elapsed:{ctx.Elapsed} ")
-        if devices.REGISTRY.get_device(self.LPCS_Pump.device_id).get_field_by_id(0).value == 2:
-            self.PumpState = True
-        elif devices.REGISTRY.get_device(self.LPCS_Pump.device_id).get_field_by_id(0).value == 0:
-            self.PumpState = False
+        if devices.REGISTRY.get_device(self.DG_1.device_id).get_field_by_id(0).value == 2:
+            self.EngineState = True
+        elif devices.REGISTRY.get_device(self.DG_1.device_id).get_field_by_id(0).value == 0:
+            self.EngineState = False
 
-        self.LPCS_Off.set_field_value(0, not self.PumpState)
-        self.LPCS_On.set_field_value(0, self.PumpState)
+        self.DG_1_Off.set_field_value(0, not self.EngineState)
+        self.DG_1_On.set_field_value(0, self.EngineState)
 
 
 
