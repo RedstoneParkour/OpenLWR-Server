@@ -37,7 +37,7 @@ class RecCommunication:
         msg.session_id = session_id
 
         msg.server_tick = 0 #TODO: implement tick
-        msg.server_time = int(time.time()) #TODO: Make uptime in seconds (int)
+        msg.server_time = int(time.time() * 1000)
 
         #make a default rec message, and add the message as a payload
         def_message = self.CreateDefaultRecMessage(rec_proto.RECMessageType.REC_HANDSHAKE_ACK)
