@@ -34,3 +34,4 @@ class UbcCommunication:
         msg.session_id = session_id
         msg.payloads.extend(payloads)
 
+        return msg

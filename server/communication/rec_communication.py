@@ -15,7 +15,7 @@ class RecCommunication:
         
     def CreateDefaultRecMessage(self,message_type:rec_proto.RECMessageType):
         msg = rec_proto.RECMessage()
-        msg.header.magic_number = 4482
+        msg.header.magic_number = 0x1312
         msg.header.protocol_version = 1
         msg.type = message_type
         return msg
