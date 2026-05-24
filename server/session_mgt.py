@@ -110,7 +110,7 @@ class SessionManager:
 
         if Heartbeat.session_id == 0:
             existing = None
-            for sid, unreg in self.UnregisteredUbcSessions.items():
+            for ses_id, unreg in self.UnregisteredUbcSessions.items():
                 if unreg.Address == address:
                     existing = unreg
                     break
@@ -207,11 +207,11 @@ class SessionManager:
                     print(f"> timeout for {Ses.Username}")
                     Ses.UbcSession = None
 
-        for sid in list(self.UnregisteredUbcSessions.keys()):
-            unreg = self.UnregisteredUbcSessions[sid]
+        for ses_id in list(self.UnregisteredUbcSessions.keys()):
+            unreg = self.UnregisteredUbcSessions[ses_id]
             if now - unreg.LastHeartbeatTime >= config.config["heartbeat_timeout"]:
-                print(f"> timeout for {sid} ")
-                self.UnregisteredUbcSessions.pop(sid)
+                print(f"> timeout for {ses_id} ")
+                self.UnregisteredUbcSessions.pop(ses_id)
 
         time.sleep(1)
 
@@ -331,8 +331,8 @@ class SessionRegistry:
                 return self.sessions[v]
     
     def FindByUbcId(self, ubc_id: int):
-        for sid in self.sessions:
-            ses = self.sessions[sid]
+        for ses_id in self.sessions:
+            ses = self.sessions[ses_id]
             if ses.UbcSession and ses.UbcSession.SessionId == ubc_id:
                 return ses
         return None
