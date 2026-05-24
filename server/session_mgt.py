@@ -16,12 +16,6 @@ import struct
 rec_communication = RecCommunication()
 ubc_communication = UbcCommunication()
 
-class UnregisteredConnection:
-    def __init__(self, address: tuple, session_id: int):
-        self.Address = address
-        self.SessionId = session_id
-        self.LastHeartbeatTime = time.time()
-
 class SessionManager:
     def __init__(self,ip:str,port:int):
         self.SessionRegistry = SessionRegistry()
@@ -280,7 +274,11 @@ class RecConnection(Connection):
     def Send(self,message):
         self.Client.send(message.SerializeToString())
 
-
+class UnregisteredConnection:
+    def __init__(self, address: tuple, session_id: int):
+        self.Address = address
+        self.SessionId = session_id
+        self.LastHeartbeatTime = time.time()
 
 class Session:
     def __init__(self,RecSession:Connection,UbcSession:Connection=None,UecSession:Connection=None,Username:str="Test"):
