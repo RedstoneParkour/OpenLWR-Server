@@ -28,7 +28,7 @@ class UbcCommunication:
     def CreateMessage(self,session_id:int,tick:int,payloads:list):
 
         msg = ubc_proto.UBCMessage()
-        msg.header.magic_number = 4482
+        msg.header.magic_number = 0x1312
         msg.header.protocol_version = 1
         msg.tick = tick
         msg.session_id = session_id
