@@ -82,7 +82,7 @@ class RecCommunication:
         
         return Status,msg
     
-    def RecServerInfo(self):
+    def RecServerInfo(self,player_count:int):
         major_version = config.config["server_major_version"]
         minor_version = config.config["server_minor_version"]
         server_name = config.config["server_name"]

@@ -91,7 +91,19 @@ class SessionManager:
                     ClientSession.UbcSession = UbcConnection(ubc_id, ClientSession.RecSession.MinorVersion, SessionState.Active, unreg.Address)
 
             case rec_proto.RECMessageType.REC_SERVER_INFO_REQUEST: #no registration required
-                msg = rec_communication.RecServerInfo()
+                player_count = 0
+                for ses in self.SessionRegistry.GetAll():
+                    if ses.RecSession.State != SessionState.Active: 
+                        continue
+
+                    if ses.UbcSession != None:
+                        if ses.UbcSession.State != SessionState.Active:
+                            continue
+
+                    #TODO: UEC
+                    player_count += 1
+
+                msg = rec_communication.RecServerInfo(player_count)
                 client.Send(msg)
                 
     def ProcessDataUBC(self,data,address):
