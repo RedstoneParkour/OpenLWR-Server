@@ -97,12 +97,13 @@ class SessionManager:
     def ProcessDataUBC(self,data,address):
         Heartbeat = common_proto.Heartbeat()
 
+        DisconnectUBC = False
+
         try: 
             Heartbeat.ParseFromString(data)
         except message.DecodeError:
-            #TODO: disconnect client
             print(f"> Invalid or malformed packet sent to UBC from {address}")
-            return
+            DisconnectUBC = True
 
         #add response time
         Heartbeat.response_timestamp = int(time.time() * 1000) # *1000 for miliseconds
@@ -115,9 +116,18 @@ class SessionManager:
                     break
             
             if existing:
+                
+                if DisconnectUBC:
+                    self.UnregisteredUbcSessions.pop(ses_id)
+                    return
+
                 existing.LastHeartbeatTime = time.time()
                 Heartbeat.session_id = existing.SessionId
             else:
+
+                if DisconnectUBC:
+                    return
+
                 new_id = self.counter_sessionid
                 self.counter_sessionid += 1
                 self.UnregisteredUbcSessions[new_id] = UnregisteredConnection(address, new_id)
@@ -132,9 +142,13 @@ class SessionManager:
 
             Session = self.SessionRegistry.FindByUbcId(Heartbeat.session_id)
             if Session == None:
-                #TODO: disconnect client
                 print(f"> Client specified a session Id {Heartbeat.session_id} on UBC while no such session exists")
             else:
+                
+                if DisconnectUBC:
+                    self.SessionRegistry.Remove(Session.RecSession.SessionId)
+                    return
+                
                 Session.UbcSession.LastHeartbeatTime = time.time()
                 Session.UbcSession.Send(Heartbeat)
         
