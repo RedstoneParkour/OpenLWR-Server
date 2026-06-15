@@ -1,0 +1,21 @@
+server_major_version = 1 #do not change
+server_minor_version = 1 #do not change
+
+#server name that appears in the server browser
+server_name = "OpenLWR Server" #default: OpenLWR Server 
+
+#could be anything, stands for "message of the day". use it to include rules or other info
+#(also in the future could be made to include simulation data, like RPV level, pressure, etc.)
+motd = "OpenLWR Server" #default: OpenLWR Server
+
+#max amount of sessions at one time. keep at lower numbers if the computer running this server is a potato
+max_player_count = 5 #default: 5
+
+#time that a player's session is saved before ending the connection, if the player does not verify, in seconds
+pre_verification_time = 60 #default: 60
+
+#when closing the connection, longest time it will wait to send remaining messages before closing
+rec_linger = 5 #default:5
+
+#maximum time UDP channels will wait to receive a heartbeat before closing
+heartbeat_timeout = 5 #default:5

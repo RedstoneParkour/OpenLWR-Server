@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0c\x63ommon.proto\x12\x11\x64ose.proto.common\"G\n\x06Header\x12\x14\n\x0cmagic_number\x18\x01 \x01(\x07\x12\x18\n\x10protocol_version\x18\x02 \x01(\r\x12\r\n\x05\x66lags\x18\x03 \x01(\rb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0c\x63ommon.proto\x12\x11\x64ose.proto.common\"G\n\x06Header\x12\x14\n\x0cmagic_number\x18\x01 \x01(\x07\x12\x18\n\x10protocol_version\x18\x02 \x01(\r\x12\r\n\x05\x66lags\x18\x03 \x01(\r\"\x87\x01\n\tHeartbeat\x12)\n\x06header\x18\x01 \x01(\x0b\x32\x19.dose.proto.common.Header\x12\x12\n\nsession_id\x18\x02 \x01(\r\x12\x0c\n\x04tick\x18\x03 \x01(\r\x12\x11\n\ttimestamp\x18\x04 \x01(\x04\x12\x1a\n\x12response_timestamp\x18\x05 \x01(\x04\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -33,4 +33,6 @@ if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
   _globals['_HEADER']._serialized_start=35
   _globals['_HEADER']._serialized_end=106
+  _globals['_HEARTBEAT']._serialized_start=109
+  _globals['_HEARTBEAT']._serialized_end=244
 # @@protoc_insertion_point(module_scope)
