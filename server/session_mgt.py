@@ -107,7 +107,6 @@ class SessionManager:
         #add response time
         Heartbeat.response_timestamp = int(time.time() * 1000) # *1000 for miliseconds
 
-
         if Heartbeat.session_id == 0:
             existing = None
             for ses_id, unreg in self.UnregisteredUbcSessions.items():
@@ -213,7 +212,7 @@ class SessionManager:
                 print(f"> timeout for {ses_id} ")
                 self.UnregisteredUbcSessions.pop(ses_id)
 
-        time.sleep(1)
+        time.sleep(0.1) #i see zero reason to be waiting a whole second for this
 
 
     def CloseServer(self,reason:str):

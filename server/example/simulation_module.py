@@ -1,5 +1,6 @@
 from server.simulation import simulation
 from server import devices
+from enum import Enum
 
 class SBMBreaker(devices.DeviceBase):
     def __init__(self, name: str):
@@ -14,6 +15,21 @@ class SBMBreaker(devices.DeviceBase):
             self.set_field_value(1,0)
         elif self.get_field_by_id(0).value == 2:
             self.set_field_value(1,1)
+
+class PositionType(Enum):
+    Momentary = 0,
+    Maintained = 1,
+
+
+class SBMSelector(devices.DeviceBase):
+    def __init__(self, name: str,positions:dict):
+        super().__init__(device_type="SBMBreaker",name=name)
+        self._fields = [devices.DeviceField("Position",0,1)]
+        self.positions = positions #not sure how to do for now
+
+    def on_interaction(self, interaction_id, interaction_type, data):
+        value = getattr(data,data.WhichOneof("data"))
+        self.set_field_value(data.field,value)
 
 class Indicator(devices.DeviceBase):
     def __init__(self, name: str):

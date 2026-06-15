@@ -8,7 +8,6 @@ simulation_context = None
 session_mgr = None
 
 def main():
-    #ubc_channel = UBCChannel("127.0.0.1")
     session_mgr = session_mgt.SessionManager("127.0.0.1",1312)
     session_mgt.SESSION_MANAGER = session_mgr
 
