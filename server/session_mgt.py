@@ -95,12 +95,17 @@ class SessionManager:
                 sessions = self.SessionRegistry.GetAll()
                 for ses in sessions:
                     ses = sessions[ses]
-                    if ses.RecSession.State != SessionState.Active: 
+                    if ses.RecSession != None:
+                        if ses.RecSession.State != SessionState.Active: 
+                            continue
+                    else:
                         continue
 
                     if ses.UbcSession != None:
                         if ses.UbcSession.State != SessionState.Active:
                             continue
+                    else:
+                        continue
 
                     #TODO: UEC
                     player_count += 1
@@ -203,15 +208,23 @@ class SessionManager:
 
 
                 #receive data and process
-                while True:
+                while connection._closed == False:
                     try:
-                        data = connection.recv(1048)
+                        try:
+                            data = connection.recv(1048)
+                        except:
+                            connection.close()
+
                         if not data:
-                            break
+                            connection.close()
+
                         self.ProcessDataRec(data,address)
                     except ConnectionResetError:
                         print("Remote host forcibly closed connection")
-                        break
+                        connection.close()
+                
+                self.SessionRegistry.Remove(rec_connection.SessionId)
+                print("hello!")
 
 
         threading.Thread(target=ConnectionManager,args=(conn,addr)).start()     
@@ -231,6 +244,7 @@ class SessionManager:
             if Ses.RecSession.State == SessionState.Connecting:
                 if now-Ses.RecSession.CreationTime >= config.config["pre_verification_time"]:
                     Ses.RecSession.Send(rec_communication.CreateRecSessionClose(rec_proto.RECSessionClose.Reason.TIMEOUT,"Exceeded pre-verifcation timeout threshold."))
+                    Ses.RecSession.Client.shutdown(1)
                     Ses.RecSession.Client.close()
                     self.SessionRegistry.Remove(Ses.RecSession.SessionId)
 
@@ -304,7 +318,8 @@ class RecConnection(Connection):
         return Status == RecStatus.OK
     
     def Send(self,message):
-        self.Client.send(message.SerializeToString())
+        if not self.Client._closed:
+            self.Client.send(message.SerializeToString())
 
 class UnregisteredConnection:
     def __init__(self, address: tuple, session_id: int):
