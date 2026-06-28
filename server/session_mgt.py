@@ -2,6 +2,7 @@ import numpy as np
 from enum import Enum
 import socket
 from google.protobuf import message
+import google.protobuf.any as any
 import server.protocols.common_pb2 as common_proto
 import server.protocols.rec_pb2 as rec_proto
 import server.protocols.ubc_pb2 as ubc_proto
@@ -151,12 +152,19 @@ class SessionManager:
                 self.counter_sessionid += 1
                 self.UnregisteredUbcSessions[new_id] = UnregisteredConnection(address, new_id)
                 Heartbeat.session_id = new_id
+                
+                any_msg = any.Any()
+                any_msg.Pack(Heartbeat)
 
-            self.SocketUbc.sendto(Heartbeat.SerializeToString(),address)
+            self.SocketUbc.sendto(any_msg.SerializeToString(),address)
         else:
             if Heartbeat.session_id in self.UnregisteredUbcSessions:
                 self.UnregisteredUbcSessions[Heartbeat.session_id].LastHeartbeatTime = time.time()
-                self.SocketUbc.sendto(Heartbeat.SerializeToString(),address)
+
+                any_msg = any.Any()
+                any_msg.Pack(Heartbeat)
+
+                self.SocketUbc.sendto(any_msg.SerializeToString(),address)
                 return
 
             Session = self.SessionRegistry.FindByUbcId(Heartbeat.session_id)
@@ -169,7 +177,11 @@ class SessionManager:
                     return
                 
                 Session.UbcSession.LastHeartbeatTime = time.time()
-                Session.UbcSession.Send(Heartbeat)
+
+                any_msg = any.Any()
+                any_msg.Pack(Heartbeat)
+
+                Session.UbcSession.Send(any_msg)
         
 
     def BroadcastUBC(self,tick_context):

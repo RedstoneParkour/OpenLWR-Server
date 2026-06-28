@@ -3,7 +3,7 @@ from typing import Union, Optional
 from dataclasses import dataclass
 from abc import ABC
 from enum import IntEnum
-import hashlib
+import xxhash
 import server.protocols.ubc_pb2 as ubc_pb2
 DeviceFieldValue = Union[str, int, float, bool, bytes]
 @dataclass
@@ -26,7 +26,7 @@ class StateChangeResult(IntEnum):
 
 class DeviceBase(ABC):
     def __init__(self, device_type: str, name: str):
-        self._device_id = np.ulonglong(int(hashlib.sha256(name.encode()).hexdigest(), 16) % (2**64))
+        self._device_id = np.ulonglong(xxhash.xxh64(name.encode()).intdigest())
         self._device_type = device_type
         self._is_dirty = False
         self._fields: list[DeviceField] = []
@@ -74,7 +74,7 @@ class DeviceBase(ABC):
             print("Wrong field type %d" % field_id)
             return StateChangeResult.INVALID_VALUE
 
-        changed_value = field.value != new_value
+        changed_value = True #field.value != new_value
         field.value = new_value
         if changed_value:
             self._is_dirty = True
