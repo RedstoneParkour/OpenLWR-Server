@@ -3,6 +3,7 @@ from typing import Union, Optional
 from dataclasses import dataclass
 from abc import ABC
 from enum import IntEnum
+from events import Events
 import xxhash
 import server.protocols.ubc_pb2 as ubc_pb2
 DeviceFieldValue = Union[str, int, float, bool, bytes]
@@ -74,7 +75,7 @@ class DeviceBase(ABC):
             print("Wrong field type %d" % field_id)
             return StateChangeResult.INVALID_VALUE
 
-        changed_value = True #field.value != new_value
+        changed_value = field.value != new_value
         field.value = new_value
         if changed_value:
             self._is_dirty = True
@@ -86,6 +87,7 @@ class DeviceBase(ABC):
 class DeviceRegistry:
     _instance: "DeviceRegistry" = None
     _devices: dict[np.ulonglong, "DeviceBase"]
+    OnInteractionComplete = Events()
     def __new__(cls) -> "DeviceRegistry":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
@@ -155,4 +157,7 @@ def on_interaction(client, message):
     data = ubc_pb2.UBCMessage.Payload.Data()
     data.ParseFromString(interaction.data)
 
-    device.on_interaction(interaction_id, interaction_type, data)
+    valid,reason = device.on_interaction(interaction_id, interaction_type, data)
+
+    REGISTRY.OnInteractionComplete.on_changed(client,interaction_id,valid,reason)
+        

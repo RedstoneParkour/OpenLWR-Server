@@ -38,6 +38,8 @@ class SessionManager:
 
         self.counter_sessionid = 1 #start at 1 to prevent giving out session ID 0
 
+        devices.REGISTRY.OnInteractionComplete.on_changed += self.HandleInteractionAck
+
 
 
     def ProcessDataRec(self,data,address):
@@ -113,7 +115,12 @@ class SessionManager:
 
                 msg = rec_communication.RecServerInfo(player_count)
                 client.Send(msg)
-                
+
+    def HandleInteractionAck(self,client,id,valid,reason):
+        msg = rec_communication.CreateRecInteractionAck(id,valid,reason)
+
+        client.Send(msg)
+
     def ProcessDataUBC(self,data,address):
         Heartbeat = common_proto.Heartbeat()
 
