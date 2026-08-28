@@ -22,18 +22,27 @@ class SBMBreaker(devices.DeviceBase):
         return (True, "")
 
 class PositionType(Enum):
-    Momentary = 0,
-    Maintained = 1,
+    Momentary = 0
+    Maintained = 1
 
 class Gauge(devices.DeviceBase):
     def __init__(self, name: str):
         super().__init__(device_type="Gauge",name=name)
         self._fields = [devices.DeviceField("Value", 0, 0.0)]
 
+class AnnunciatorState(Enum):
+    Clear = 0
+    Active = 1
+    Acknowledged = 2
+    ActiveClear = 3
+        
 class AnnunciatorBoard(devices.DeviceBase):
     def __init__(self, name: str, annunciators: [str]):
         super().__init__(device_type="AnnunciatorBoard",name=name)
         self._fields = [devices.DeviceField(annunciators[idx], idx, 0) for idx in range(len(annunciators))]
+    def set_field_value(self, field: int, value: AnnunciatorState):
+        super().set_field_value(field, value.value)
+        pass
 
 class SBMSelector(devices.DeviceBase):
     def __init__(self, name: str,positions:dict):
@@ -77,10 +86,10 @@ class BlinkenLights(simulation.SimulationModule):
 
         if self.EngineState:
             self.DG_Speed.set_field_value(0, 1.0)
-            self.BOARD_603200.set_field_value(0, 1)
+            self.BOARD_603200.set_field_value(0, AnnunciatorState.Active)
         else:
             self.DG_Speed.set_field_value(0, 0.0)
-            self.BOARD_603200.set_field_value(0, 0)
+            self.BOARD_603200.set_field_value(0, AnnunciatorState.Clear)
             
         self.DG_1_Off.set_field_value(0, not self.EngineState)
         self.DG_1_On.set_field_value(0, self.EngineState)
